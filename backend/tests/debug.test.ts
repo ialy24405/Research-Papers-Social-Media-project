@@ -1,5 +1,6 @@
 import request from "supertest";
 import app from "../src/app";
+import { it, describe } from "node:test";
 
 describe("Simple Auth Test", () => {
 	it("should attempt registration", async () => {
