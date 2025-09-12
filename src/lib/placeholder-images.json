@@ -1,0 +1,58 @@
+{
+  "placeholderImages": [
+    {
+      "id": "user-avatar-1",
+      "description": "A placeholder for a user's avatar.",
+      "imageUrl": "https://picsum.photos/seed/101/100/100",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "user-avatar-2",
+      "description": "A placeholder for another user's avatar.",
+      "imageUrl": "https://picsum.photos/seed/102/100/100",
+      "imageHint": "woman smiling"
+    },
+    {
+      "id": "paper-thumb-1",
+      "description": "An abstract thumbnail for a paper.",
+      "imageUrl": "https://picsum.photos/seed/201/400/300",
+      "imageHint": "abstract geometry"
+    },
+    {
+      "id": "paper-thumb-2",
+      "description": "An abstract thumbnail for another paper.",
+      "imageUrl": "https://picsum.photos/seed/202/400/300",
+      "imageHint": "science technology"
+    },
+    {
+      "id": "paper-thumb-3",
+      "description": "An abstract thumbnail for a third paper.",
+      "imageUrl": "https://picsum.photos/seed/203/400/300",
+      "imageHint": "abstract lines"
+    },
+    {
+      "id": "category-cs",
+      "description": "Image for Computer Science category.",
+      "imageUrl": "https://picsum.photos/seed/301/400/300",
+      "imageHint": "computer code"
+    },
+    {
+      "id": "category-bio",
+      "description": "Image for Biology category.",
+      "imageUrl": "https://picsum.photos/seed/302/400/300",
+      "imageHint": "microscope cells"
+    },
+    {
+      "id": "category-phy",
+      "description": "Image for Physics category.",
+      "imageUrl": "https://picsum.photos/seed/303/400/300",
+      "imageHint": "galaxy stars"
+    },
+     {
+      "id": "hero-bg",
+      "description": "Background for hero section.",
+      "imageUrl": "https://picsum.photos/seed/401/1920/1080",
+      "imageHint": "library books"
+    }
+  ]
+}

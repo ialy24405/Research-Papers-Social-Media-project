@@ -1,0 +1,51 @@
+# Extremely minimal Docker image (~400-600MB)
+FROM node:18-alpine3.18
+
+# Install only the bare minimum
+RUN apk add --no-cache libc6-compat \
+    && rm -rf /var/cache/apk/* /tmp/* /var/tmp/*
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json package-lock.json* ./
+
+# Install dependencies with extreme optimizations
+RUN npm ci --omit=dev --no-audit --no-fund --no-scripts \
+    && npm cache clean --force \
+    && rm -rf ~/.npm /tmp/* /var/tmp/*
+
+# Copy only essential source files
+COPY src ./src
+COPY public ./public
+COPY next.config.ts tailwind.config.ts tsconfig.json postcss.config.mjs ./
+
+# Install only essential dev dependencies needed for Next.js dev server
+RUN npm install --no-save \
+    @next/swc-darwin-x64 \
+    @next/swc-linux-x64 \
+    @next/swc-win32-x64 \
+    typescript \
+    && npm cache clean --force \
+    && rm -rf ~/.npm
+
+# Extreme cleanup
+RUN find node_modules -name "*.md" -delete \
+    && find node_modules -name "*.txt" -delete \
+    && find node_modules -name "README*" -delete \
+    && find node_modules -name "CHANGELOG*" -delete \
+    && find node_modules -name "LICENSE*" -delete \
+    && find node_modules -name "*.map" -delete \
+    && find node_modules -name "test" -type d -exec rm -rf {} + 2>/dev/null || true \
+    && find node_modules -name "tests" -type d -exec rm -rf {} + 2>/dev/null || true \
+    && find node_modules -name "docs" -type d -exec rm -rf {} + 2>/dev/null || true \
+    && find node_modules -name "examples" -type d -exec rm -rf {} + 2>/dev/null || true \
+    && rm -rf node_modules/.cache
+
+EXPOSE 3000
+
+ENV NODE_ENV=development \
+    NEXT_TELEMETRY_DISABLED=1 \
+    NODE_OPTIONS="--max-old-space-size=256"
+
+CMD ["npx", "next", "dev", "--turbopack"]

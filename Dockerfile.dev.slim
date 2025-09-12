@@ -1,0 +1,76 @@
+# Ultra-lightweight Development Dockerfile (~200-300MB instead of 1.55GB)
+FROM node:18-alpine3.18 AS base
+
+# Install only essential system dependencies
+RUN apk add --no-cache \
+    libc6-compat \
+    && rm -rf /var/cache/apk/*
+
+WORKDIR /app
+
+# Stage 1: Dependencies only
+FROM base AS deps
+# Copy package files
+COPY package.json package-lock.json* ./
+
+# Install dependencies with optimizations
+RUN npm ci --only=production --no-audit --no-fund \
+    && npm cache clean --force
+
+# Stage 2: Development dependencies
+FROM base AS dev-deps
+COPY package.json package-lock.json* ./
+RUN npm ci --no-audit --no-fund \
+    && npm cache clean --force
+
+# Stage 3: Development image
+FROM base AS development
+
+# Copy production dependencies
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copy dev dependencies (only add what we need)
+COPY --from=dev-deps /app/node_modules/.bin ./node_modules/.bin
+COPY --from=dev-deps /app/node_modules/@next ./node_modules/@next
+COPY --from=dev-deps /app/node_modules/@swc ./node_modules/@swc
+COPY --from=dev-deps /app/node_modules/typescript ./node_modules/typescript
+COPY --from=dev-deps /app/node_modules/eslint* ./node_modules/
+COPY --from=dev-deps /app/node_modules/@typescript-eslint ./node_modules/@typescript-eslint
+COPY --from=dev-deps /app/node_modules/@types ./node_modules/@types
+
+# Copy source code
+COPY . .
+
+# Remove unnecessary files to reduce size
+RUN rm -rf \
+    /app/.git \
+    /app/node_modules/.cache \
+    /app/.next/cache \
+    /tmp/* \
+    /var/tmp/* \
+    && find /app/node_modules -name "*.md" -delete \
+    && find /app/node_modules -name "*.txt" -delete \
+    && find /app/node_modules -name "CHANGELOG*" -delete \
+    && find /app/node_modules -name "README*" -delete \
+    && find /app/node_modules -name "*.map" -delete
+
+# Expose port
+EXPOSE 3000
+
+# Environment
+ENV NODE_ENV=development \
+    NEXT_TELEMETRY_DISABLED=1 \
+    NODE_OPTIONS="--max-old-space-size=1024"
+
+# Create lightweight startup script
+RUN printf '#!/bin/sh\n\
+echo "🚀 Starting lightweight development server..."\n\
+npm run dev &\n\
+DEV_PID=$!\n\
+sleep 8\n\
+echo "🔥 Running warmup..."\n\
+npm run warmup 2>/dev/null || echo "Warmup skipped"\n\
+echo "✅ Ready at http://localhost:3000"\n\
+wait $DEV_PID\n' > /app/start.sh && chmod +x /app/start.sh
+
+CMD ["/app/start.sh"]

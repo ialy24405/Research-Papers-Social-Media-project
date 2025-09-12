@@ -1,0 +1,190 @@
+import { Request, Response } from "express";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import { PaperModel, CreatePaperData } from "../models/paper.model";
+import { CategoryModel } from "../models/category.model";
+import { paperUploadSchema, papersQuerySchema } from "../utils/validation";
+import { AuthRequest } from "../middleware/auth.middleware";
+import { config } from "../../config";
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+	destination: (req, file, cb) => {
+		const uploadDir = config.upload.directory;
+		if (!fs.existsSync(uploadDir)) {
+			fs.mkdirSync(uploadDir, { recursive: true });
+		}
+		cb(null, uploadDir);
+	},
+	filename: (req, file, cb) => {
+		const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+		cb(null, "paper-" + uniqueSuffix + path.extname(file.originalname));
+	},
+});
+
+const upload = multer({
+	storage: storage,
+	limits: {
+		fileSize: config.upload.maxFileSize,
+	},
+	fileFilter: (req, file, cb) => {
+		if (file.mimetype === "application/pdf") {
+			cb(null, true);
+		} else {
+			cb(new Error("Only PDF files are allowed"));
+		}
+	},
+});
+
+export class PaperController {
+	static uploadMiddleware = upload.single("pdfFile");
+
+	static async getAllPapers(req: Request, res: Response) {
+		try {
+			// Validate query parameters
+			const { error, value } = papersQuerySchema.validate(req.query);
+			if (error) {
+				return res.status(400).json({ error: error.details[0].message });
+			}
+
+			const papers = await PaperModel.findAll(value);
+
+			// Transform data for response
+			const response = papers.map((paper) => ({
+				id: paper.id,
+				name: paper.title,
+				description: paper.description,
+				authorName: paper.author_name,
+				authorAvatar: paper.author_avatar,
+				createdAt: paper.created_at,
+				interactions: {
+					reactions: paper.reaction_count,
+					comments: paper.comment_count,
+					saves: paper.save_count,
+				},
+			}));
+
+			res.status(200).json(response);
+		} catch (error) {
+			console.error("Get papers error:", error);
+			res.status(500).json({ error: "Internal server error" });
+		}
+	}
+
+	static async uploadPaper(req: AuthRequest, res: Response) {
+		try {
+			if (!req.user) {
+				return res.status(401).json({ error: "Authentication required" });
+			}
+
+			if (!req.file) {
+				return res.status(400).json({ error: "PDF file is required" });
+			}
+
+			// Validate form data
+			const { error, value } = paperUploadSchema.validate(req.body);
+			if (error) {
+				// Clean up uploaded file on validation error
+				fs.unlinkSync(req.file.path);
+				return res.status(400).json({ error: error.details[0].message });
+			}
+
+			const { title, description, categoryId } = value;
+
+			// Verify category exists
+			const category = await CategoryModel.findById(categoryId);
+			if (!category) {
+				// Clean up uploaded file
+				fs.unlinkSync(req.file.path);
+				return res.status(400).json({ error: "Invalid category" });
+			}
+
+			// Create paper data
+			const paperData: CreatePaperData = {
+				title,
+				description,
+				authorId: req.user.id,
+				categoryId,
+				pdfUrl: `/uploads/${req.file.filename}`,
+			};
+
+			const paper = await PaperModel.create(paperData);
+
+			res.status(201).json({
+				message: "Paper submitted for review.",
+				paper: {
+					id: paper.id,
+					title: paper.title,
+					description: paper.description,
+					categoryId: paper.category_id,
+					pdfUrl: paper.pdf_url,
+					status: paper.status,
+					createdAt: paper.created_at,
+				},
+			});
+		} catch (error) {
+			console.error("Upload paper error:", error);
+
+			// Clean up uploaded file on error
+			if (req.file && fs.existsSync(req.file.path)) {
+				fs.unlinkSync(req.file.path);
+			}
+
+			res.status(500).json({ error: "Internal server error" });
+		}
+	}
+
+	static async getPaperById(req: Request, res: Response) {
+		try {
+			const paperId = parseInt(req.params.id);
+
+			if (isNaN(paperId)) {
+				return res.status(400).json({ error: "Invalid paper ID" });
+			}
+
+			const paper = await PaperModel.findById(paperId);
+
+			if (!paper) {
+				return res.status(404).json({ error: "Paper not found" });
+			}
+
+			// Get comments for the paper
+			const comments = await PaperModel.getComments(paperId);
+
+			const response = {
+				id: paper.id,
+				name: paper.title,
+				description: paper.description,
+				author: {
+					name: paper.author_name,
+					avatarUrl: paper.author_avatar,
+				},
+				category: {
+					name: paper.category_name,
+				},
+				pdfUrl: paper.pdf_url,
+				aiSummary: paper.ai_summary,
+				createdAt: paper.created_at,
+				interactions: {
+					reactions: paper.reaction_count,
+					comments: paper.comment_count,
+					saves: paper.save_count,
+				},
+				comments: comments.map((comment) => ({
+					user: {
+						name: comment.user_name,
+						avatarUrl: comment.user_avatar,
+					},
+					text: comment.comment_text,
+					createdAt: comment.created_at,
+				})),
+			};
+
+			res.status(200).json(response);
+		} catch (error) {
+			console.error("Get paper by ID error:", error);
+			res.status(500).json({ error: "Internal server error" });
+		}
+	}
+}

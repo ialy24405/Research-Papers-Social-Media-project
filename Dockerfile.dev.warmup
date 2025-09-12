@@ -1,0 +1,48 @@
+# Docker with Warmup - Development Version
+FROM node:18-alpine3.18
+
+# Install system dependencies
+RUN apk add --no-cache libc6-compat curl \
+    && rm -rf /var/cache/apk/*
+
+WORKDIR /app
+
+# Copy package files and install dependencies
+COPY package.json package-lock.json* ./
+RUN npm ci --no-audit --no-fund \
+    && npm cache clean --force \
+    && rm -rf ~/.npm
+
+# Copy source code
+COPY src ./src
+COPY public ./public
+COPY *.config.* ./
+COPY tsconfig.json ./
+
+# Copy warmup scripts
+COPY scripts ./scripts
+
+# Create a startup script that includes warmup
+RUN echo '#!/bin/sh' > /app/start-with-warmup.sh && \
+    echo 'echo "🚀 Starting Next.js with warmup..."' >> /app/start-with-warmup.sh && \
+    echo 'npm run dev &' >> /app/start-with-warmup.sh && \
+    echo 'DEV_PID=$!' >> /app/start-with-warmup.sh && \
+    echo 'echo "⏳ Waiting for server to be ready..."' >> /app/start-with-warmup.sh && \
+    echo 'sleep 8' >> /app/start-with-warmup.sh && \
+    echo 'echo "🔥 Starting COMPLETE warmup process..."' >> /app/start-with-warmup.sh && \
+    echo 'node scripts/complete-warmup.js || echo "⚠️ Complete warmup failed, trying quick warmup..."' >> /app/start-with-warmup.sh && \
+    echo 'node scripts/quick-warmup.js || echo "⚠️ All warmup failed, but server is running"' >> /app/start-with-warmup.sh && \
+    echo 'echo "✅ Development environment ready!"' >> /app/start-with-warmup.sh && \
+    echo 'echo "📱 Access your app at: http://localhost:3000"' >> /app/start-with-warmup.sh && \
+    echo 'wait $DEV_PID' >> /app/start-with-warmup.sh && \
+    chmod +x /app/start-with-warmup.sh
+
+# Expose port
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:3000 || exit 1
+
+# Start with warmup
+CMD ["./start-with-warmup.sh"]

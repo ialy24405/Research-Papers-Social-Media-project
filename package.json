@@ -1,27 +1,60 @@
 {
-  "name": "papers-project",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
-  "dependencies": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "next": "15.3.3"
-  },
-  "devDependencies": {
-    "typescript": "^5",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
-    "eslint": "^9",
-    "eslint-config-next": "15.3.3",
-    "@eslint/eslintrc": "^3"
-  }
+	"name": "papers-project",
+	"version": "0.1.0",
+	"private": true,
+	"scripts": {
+		"dev": "next dev --turbopack",
+		"dev:fast": "node scripts/dev-with-warmup.js",
+		"dev:quick": "powershell -ExecutionPolicy Bypass -File scripts/dev-fast.ps1",
+		"start:dev": "scripts\\start-development.bat",
+		"build": "next build",
+		"build:analyze": "ANALYZE=true next build",
+		"start": "next start",
+		"start:production": "npm run build && npm run start",
+		"lint": "next lint",
+		"warmup": "node scripts/warmup.js",
+		"warmup:quick": "node scripts/quick-warmup.js",
+		"warmup:complete": "node scripts/complete-warmup.js",
+		"warmup:auto": "node scripts/dev-with-warmup.js",
+		"docker:dev": "docker-compose up --build",
+		"docker:dev-warmup": "docker-compose -f docker-compose.warmup.yml up --build papers-app-dev-warmup",
+		"docker:prod-warmup": "docker-compose -f docker-compose.warmup.yml up --build papers-app-prod-warmup",
+		"docker:minimal": "docker-compose -f docker-compose.slim.yml up --build papers-app-dev-minimal",
+		"docker:slim": "docker-compose -f docker-compose.slim.yml up --build papers-app-dev-slim",
+		"docker:ultra-slim": "docker-compose -f docker-compose.slim.yml up --build papers-app-dev-ultra-slim",
+		"docker:size-check": "powershell -ExecutionPolicy Bypass -File scripts/docker-size-comparison.ps1"
+	},
+	"dependencies": {
+		"@radix-ui/react-avatar": "^1.1.10",
+		"@radix-ui/react-dialog": "^1.1.15",
+		"@radix-ui/react-dropdown-menu": "^2.1.16",
+		"@radix-ui/react-label": "^2.1.7",
+		"@radix-ui/react-popover": "^1.1.15",
+		"@radix-ui/react-select": "^2.2.6",
+		"@radix-ui/react-separator": "^1.1.7",
+		"@radix-ui/react-slot": "^1.2.3",
+		"@radix-ui/react-tabs": "^1.1.13",
+		"@radix-ui/react-toast": "^1.2.15",
+		"@radix-ui/react-tooltip": "^1.2.8",
+		"class-variance-authority": "^0.7.1",
+		"date-fns": "^4.1.0",
+		"embla-carousel-react": "^8.6.0",
+		"lucide-react": "^0.544.0",
+		"next": "15.3.3",
+		"react": "^19.0.0",
+		"react-day-picker": "^9.9.0",
+		"react-dom": "^19.0.0",
+		"tailwind-merge": "^3.3.1"
+	},
+	"devDependencies": {
+		"@eslint/eslintrc": "^3",
+		"@types/node": "^20",
+		"@types/react": "^19",
+		"@types/react-dom": "^19",
+		"autoprefixer": "^10.4.21",
+		"eslint": "^9",
+		"eslint-config-next": "15.3.3",
+		"tailwindcss": "^3.4.17",
+		"typescript": "^5"
+	}
 }

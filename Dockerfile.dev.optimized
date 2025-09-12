@@ -1,0 +1,40 @@
+# Optimized Development Dockerfile
+FROM node:18-alpine
+
+# Install dependencies
+RUN apk add --no-cache libc6-compat
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json package-lock.json* ./
+
+# Install ALL dependencies (including dev dependencies)
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Pre-build to warm up the cache (this compiles everything once)
+RUN npm run build || true
+
+# Expose port
+EXPOSE 3000
+
+# Set environment
+ENV NODE_ENV=development
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Create startup script that runs dev server and warmup
+RUN echo '#!/bin/sh' > /app/start-dev.sh && \
+    echo 'npm run dev &' >> /app/start-dev.sh && \
+    echo 'DEV_PID=$!' >> /app/start-dev.sh && \
+    echo 'sleep 10' >> /app/start-dev.sh && \
+    echo 'echo "🔥 Starting warmup process..."' >> /app/start-dev.sh && \
+    echo 'npm run warmup || echo "Warmup failed, continuing..."' >> /app/start-dev.sh && \
+    echo 'echo "✅ Warmup complete! Development server ready."' >> /app/start-dev.sh && \
+    echo 'wait $DEV_PID' >> /app/start-dev.sh && \
+    chmod +x /app/start-dev.sh
+
+# Start development server with warmup
+CMD ["/app/start-dev.sh"]

@@ -1,0 +1,41 @@
+# Distroless-based ultra-minimal image (~100-150MB)
+FROM node:18-alpine3.18 AS builder
+
+# Install dependencies
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Copy and install dependencies
+COPY package.json package-lock.json* ./
+RUN npm ci --no-audit --no-fund && npm cache clean --force
+
+# Copy source
+COPY . .
+
+# Remove dev dependencies and cleanup
+RUN npm prune --production \
+    && rm -rf node_modules/.cache \
+    && find node_modules -name "*.md" -delete \
+    && find node_modules -name "*.map" -delete
+
+# Final stage - minimal runtime
+FROM gcr.io/distroless/nodejs18-debian11:nonroot
+
+WORKDIR /app
+
+# Copy only what we need
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/next.config.ts ./
+COPY --from=builder /app/tailwind.config.ts ./
+COPY --from=builder /app/tsconfig.json ./
+COPY --from=builder /app/postcss.config.mjs ./
+
+EXPOSE 3000
+
+ENV NODE_ENV=development \
+    NEXT_TELEMETRY_DISABLED=1
+
+CMD ["node_modules/.bin/next", "dev", "--turbopack"]

@@ -1,0 +1,50 @@
+# Ultra-slim Development Dockerfile (~150-200MB)
+FROM node:18-alpine3.18
+
+# Install only essential dependencies
+RUN apk add --no-cache libc6-compat dumb-init \
+    && rm -rf /var/cache/apk/* \
+    && rm -rf /tmp/*
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json package-lock.json* ./
+
+# Install dependencies with aggressive optimizations
+RUN npm ci --no-audit --no-fund --prefer-offline \
+    && npm cache clean --force \
+    && rm -rf ~/.npm \
+    && rm -rf /tmp/*
+
+# Copy source code (exclude unnecessary files via .dockerignore)
+COPY . .
+
+# Aggressive cleanup to minimize image size
+RUN rm -rf \
+    node_modules/.cache \
+    node_modules/*/.nyc_output \
+    node_modules/*/test \
+    node_modules/*/tests \
+    node_modules/*/docs \
+    node_modules/*/doc \
+    node_modules/*/examples \
+    node_modules/*/example \
+    node_modules/*/*.md \
+    node_modules/*/README* \
+    node_modules/*/CHANGELOG* \
+    node_modules/*/LICENSE* \
+    node_modules/*/*.map \
+    .next/cache \
+    .next/static/chunks/*.map 2>/dev/null || true
+
+# Expose port
+EXPOSE 3000
+
+# Environment optimizations
+ENV NODE_ENV=development \
+    NEXT_TELEMETRY_DISABLED=1 \
+    NODE_OPTIONS="--max-old-space-size=512"
+
+# Simple startup command
+CMD ["sh", "-c", "echo '🚀 Starting slim dev server...' && npm run dev"]
