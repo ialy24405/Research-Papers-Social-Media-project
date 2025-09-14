@@ -19,7 +19,7 @@ export const loginSchema = Joi.object({
 // Paper validation schemas
 export const paperUploadSchema = Joi.object({
 	title: Joi.string().min(3).max(255).required(),
-	description: Joi.string().min(10).required(),
+	description: Joi.string().optional().allow(""),
 	categoryId: Joi.string().required(),
 });
 

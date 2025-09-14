@@ -132,4 +132,15 @@ export class AuthController {
 			res.status(500).json({ error: "Internal server error" });
 		}
 	}
+
+	static async logout(req: Request, res: Response) {
+		try {
+			// For JWT tokens, logout is handled on the client side
+			// We just return a success response
+			res.status(200).json({ message: "Logged out successfully" });
+		} catch (error) {
+			console.error("Logout error:", error);
+			res.status(500).json({ error: "Internal server error" });
+		}
+	}
 }

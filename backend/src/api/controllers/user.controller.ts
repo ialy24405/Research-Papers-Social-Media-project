@@ -3,6 +3,32 @@ import { PaperModel } from "../models/paper.model";
 import { AuthRequest } from "../middleware/auth.middleware";
 
 export class UserController {
+	static async getCurrentUser(req: AuthRequest, res: Response) {
+		try {
+			if (!req.user) {
+				return res.status(401).json({ error: "Authentication required" });
+			}
+
+			// Return the user data from the auth middleware with proper serialization
+			const userResponse = {
+				id: req.user.id,
+				fullName: req.user.fullName,
+				email: req.user.email,
+				birthDate: req.user.birthDate.toISOString(),
+				collegeName: req.user.collegeName,
+				country: req.user.country,
+				ssn: req.user.ssn,
+				avatarUrl: req.user.avatarUrl,
+				role: req.user.role,
+				createdAt: req.user.createdAt.toISOString(),
+			};
+
+			res.status(200).json(userResponse);
+		} catch (error) {
+			console.error("Get current user error:", error);
+			res.status(500).json({ error: "Internal server error" });
+		}
+	}
 	static async getUserPapers(req: AuthRequest, res: Response) {
 		try {
 			if (!req.user) {

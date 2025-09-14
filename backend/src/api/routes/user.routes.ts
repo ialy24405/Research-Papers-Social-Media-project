@@ -4,6 +4,9 @@ import { authMiddleware } from "../middleware/auth.middleware";
 
 const router = Router();
 
+// GET /api/users/me - Get current user profile
+router.get("/me", authMiddleware, UserController.getCurrentUser);
+
 // GET /api/users/me/papers - Get current user's papers
 router.get("/me/papers", authMiddleware, UserController.getUserPapers);
 

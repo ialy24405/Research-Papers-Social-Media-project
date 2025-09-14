@@ -39,8 +39,13 @@ if (config.nodeEnv !== "test") {
 	app.use(morgan("combined"));
 }
 
-// Body parsing middleware
-app.use(express.json({ limit: "10mb" }));
+// Body parsing middleware - skip JSON parsing for upload routes
+app.use((req, res, next) => {
+	if (req.path.includes("/upload")) {
+		return next();
+	}
+	express.json({ limit: "10mb" })(req, res, next);
+});
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Static file serving for uploads

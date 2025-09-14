@@ -9,6 +9,12 @@ export interface AuthRequest extends Request {
 		email: string;
 		role: string;
 		fullName: string;
+		birthDate: Date;
+		collegeName: string;
+		country: string;
+		ssn: string;
+		avatarUrl: string | undefined;
+		createdAt: Date;
 	};
 	file?: any;
 }
@@ -37,9 +43,15 @@ export async function authMiddleware(
 
 		req.user = {
 			id: user.id,
-			email: user.email,
-			role: user.role,
 			fullName: user.full_name,
+			email: user.email,
+			birthDate: user.birth_date,
+			collegeName: user.college_name,
+			country: user.country,
+			ssn: user.ssn,
+			avatarUrl: user.avatar_url,
+			role: user.role,
+			createdAt: user.created_at,
 		};
 
 		next();

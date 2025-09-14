@@ -1,5 +1,9 @@
-import { notFound } from "next/navigation";
-import { papers, dummyUser, categories } from "@/lib/data";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { usePapers } from "@/hooks/use-papers";
+import { dummyUser } from "@/lib/data";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -19,35 +23,80 @@ import {
 	CarouselNext,
 	CarouselPrevious,
 } from "@/components/ui/carousel";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import Link from "next/link";
-import Image from "next/image";
-import { getPlaceholderImage } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
+import type { Paper } from "@/lib/types";
 
-export default async function PaperPage({
+export default function PaperPage({
 	params,
 }: {
 	params: Promise<{ id: string }>;
 }) {
-	const { id } = await params;
-	const paper = papers.find((p) => p.id === id);
+	const [id, setId] = useState<string>("");
+	const [paper, setPaper] = useState<Paper | null>(null);
+	const { papers, isLoading } = usePapers();
+	const router = useRouter();
+
+	useEffect(() => {
+		params.then(({ id: paramId }) => {
+			setId(paramId);
+		});
+	}, [params]);
+
+	useEffect(() => {
+		if (id && papers.length > 0) {
+			const foundPaper = papers.find((p) => p.id === parseInt(id));
+			setPaper(foundPaper || null);
+		}
+	}, [id, papers]);
+
+	if (isLoading) {
+		return (
+			<div className="container mx-auto max-w-5xl py-8">
+				<div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+					<main className="md:col-span-2 space-y-8">
+						<div className="animate-pulse">
+							<div className="h-8 bg-gray-200 rounded mb-4"></div>
+							<div className="h-4 bg-gray-200 rounded mb-2"></div>
+							<div className="h-20 bg-gray-200 rounded"></div>
+						</div>
+					</main>
+					<aside className="space-y-8">
+						<div className="animate-pulse">
+							<div className="h-6 bg-gray-200 rounded mb-4"></div>
+							<div className="h-32 bg-gray-200 rounded"></div>
+						</div>
+					</aside>
+				</div>
+			</div>
+		);
+	}
 
 	if (!paper) {
-		notFound();
+		return (
+			<div className="container mx-auto max-w-5xl py-8">
+				<div className="text-center py-20">
+					<h1 className="text-2xl font-bold mb-4">Paper Not Found</h1>
+					<p className="text-muted-foreground mb-4">
+						The paper you're looking for doesn't exist.
+					</p>
+					<Button onClick={() => router.push("/home")}>Go Back Home</Button>
+				</div>
+			</div>
+		);
 	}
 
 	// Frontend only: Use existing papers as related papers
-	const relatedPapers = {
-		relatedPapers: papers
-			.filter((p) => p.categoryId === paper.categoryId && p.id !== paper.id)
-			.slice(0, 5)
-			.map((p) => ({
-				title: p.name,
-				author: p.authorName,
-				description: p.description,
-			})),
-	};
+	const relatedPapers = papers
+		.filter((p) => p.categoryId === paper.categoryId && p.id !== paper.id)
+		.slice(0, 5)
+		.map((p) => ({
+			id: p.id,
+			title: p.title,
+			author: p.authorName,
+			description: p.description,
+		}));
 
 	return (
 		<div className="container mx-auto max-w-5xl py-8">
@@ -56,13 +105,13 @@ export default async function PaperPage({
 					{/* Paper Header */}
 					<section>
 						<h1 className="text-3xl md:text-4xl font-bold font-headline tracking-tight">
-							{paper.name}
+							{paper.title}
 						</h1>
 						<div className="mt-4 flex items-center gap-4 text-sm text-muted-foreground">
 							<div className="flex items-center gap-2">
 								<Avatar className="h-8 w-8">
 									<AvatarImage
-										src={paper.authorAvatar}
+										src={paper.authorAvatar || undefined}
 										alt={paper.authorName}
 									/>
 									<AvatarFallback>{paper.authorName.charAt(0)}</AvatarFallback>
@@ -91,7 +140,7 @@ export default async function PaperPage({
 								AI-Generated Summary
 							</h3>
 							<p className="text-sm text-secondary-foreground">
-								{paper.summary}
+								{paper.description}
 							</p>
 						</div>
 					</section>
@@ -113,16 +162,14 @@ export default async function PaperPage({
 						<div className="flex items-center justify-between">
 							<div className="flex items-center gap-6 text-sm text-muted-foreground">
 								<span className="flex items-center gap-1.5">
-									<Heart className="h-5 w-5" /> {paper.interactions.reactions}{" "}
-									Reactions
+									<Heart className="h-5 w-5" /> {paper.reactionCount} Reactions
 								</span>
 								<span className="flex items-center gap-1.5">
-									<MessageCircle className="h-5 w-5" />{" "}
-									{paper.interactions.comments} Comments
+									<MessageCircle className="h-5 w-5" /> {paper.commentCount}{" "}
+									Comments
 								</span>
 								<span className="flex items-center gap-1.5">
-									<Bookmark className="h-5 w-5" /> {paper.interactions.saves}{" "}
-									Saves
+									<Bookmark className="h-5 w-5" /> {paper.saveCount} Saves
 								</span>
 							</div>
 							<Button variant="outline">
@@ -150,12 +197,12 @@ export default async function PaperPage({
 					{/* Comments Section */}
 					<section>
 						<h2 className="text-2xl font-bold font-headline mb-4">
-							Comments ({paper.interactions.comments})
+							Comments ({paper.commentCount})
 						</h2>
 						<div className="flex items-start gap-4">
 							<Avatar>
-								<AvatarImage src={dummyUser.avatarUrl} />
-								<AvatarFallback>{dummyUser.name.charAt(0)}</AvatarFallback>
+								<AvatarImage src={dummyUser.avatarUrl || undefined} />
+								<AvatarFallback>{dummyUser.fullName.charAt(0)}</AvatarFallback>
 							</Avatar>
 							<div className="w-full">
 								<Textarea
@@ -180,13 +227,15 @@ export default async function PaperPage({
 						<div className="relative">
 							<Carousel opts={{ align: "start" }} className="w-full">
 								<CarouselContent>
-									{relatedPapers.relatedPapers.map((relatedPaper, index) => (
+									{relatedPapers.map((relatedPaper, index) => (
 										<CarouselItem key={index} className="md:basis-full">
 											<div className="p-1">
 												<Card>
 													<CardContent className="flex flex-col items-start gap-2 p-4">
 														<h4 className="font-semibold text-sm leading-snug hover:text-primary">
-															<Link href="#">{relatedPaper.title}</Link>
+															<Link href={`/papers/${relatedPaper.id}`}>
+																{relatedPaper.title}
+															</Link>
 														</h4>
 														<p className="text-xs text-muted-foreground">
 															by {relatedPaper.author}

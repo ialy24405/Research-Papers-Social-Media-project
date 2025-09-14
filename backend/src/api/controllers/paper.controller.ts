@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import multer from "multer";
 import path from "path";
-import fs from "fs";
+import fs, { stat } from "fs";
 import { PaperModel, CreatePaperData } from "../models/paper.model";
 import { CategoryModel } from "../models/category.model";
 import { paperUploadSchema, papersQuerySchema } from "../utils/validation";
@@ -48,15 +48,28 @@ export class PaperController {
 				return res.status(400).json({ error: error.details[0].message });
 			}
 
+            console.log("Query parameters:", value);
+
 			const papers = await PaperModel.findAll(value);
+            
+            console.log("Fetched papers:", papers);
 
 			// Transform data for response
 			const response = papers.map((paper) => ({
 				id: paper.id,
 				name: paper.title,
 				description: paper.description,
+                authorId: paper.author_id,
 				authorName: paper.author_name,
 				authorAvatar: paper.author_avatar,
+                category: {
+					id: paper.category_id,
+					name: paper.category_name,
+				},
+                pdf_url: paper.pdf_url,
+                status: paper.status,
+                rejection_reason: paper.rejection_reason,
+                approved_by: paper.approved_by_id,
 				createdAt: paper.created_at,
 				interactions: {
 					reactions: paper.reaction_count,
@@ -74,11 +87,17 @@ export class PaperController {
 
 	static async uploadPaper(req: AuthRequest, res: Response) {
 		try {
+			console.log("Upload request received:");
+			console.log("req.body:", req.body);
+			console.log("req.file:", req.file);
+			console.log("Content-Type:", req.headers["content-type"]);
+
 			if (!req.user) {
 				return res.status(401).json({ error: "Authentication required" });
 			}
 
 			if (!req.file) {
+				console.log("No file received in req.file");
 				return res.status(400).json({ error: "PDF file is required" });
 			}
 

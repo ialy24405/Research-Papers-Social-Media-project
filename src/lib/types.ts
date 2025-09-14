@@ -1,41 +1,77 @@
 export interface User {
-  id: string;
-  name: string;
-  email: string;
-  college: string;
-  country: string;
-  birthDate: string;
-  role: 'user' | 'admin';
-  avatarUrl: string;
-  ssn: string;
+	id: number;
+	fullName: string;
+	email: string;
+	collegeName: string;
+	country: string;
+	birthDate: string;
+	role: "user" | "admin";
+	avatarUrl: string | null;
+	ssn: string;
+	createdAt: string;
 }
 
 export interface Paper {
-  id: string;
-  name: string;
-  description: string;
-  authorId: string;
-  authorName: string;
-  authorAvatar: string;
-  pdfUrl: string;
-  categoryId: string;
-  status: 'approved' | 'pending' | 'rejected';
-  rejectionReason?: string;
-  approvedBy?: string; // adminId
-  createdAt: string;
-  summary: string;
-  interactions: {
-    reactions: number;
-    comments: number;
-    saves: number;
-    shares: number;
-  };
+	id: number;
+	title: string;
+	description: string;
+	authorId: number;
+	authorName: string;
+	authorAvatar: string | null;
+	pdfUrl: string;
+	categoryId: string;
+	categoryName: string;
+	categoryDescription?: string;
+	status: "approved" | "pending" | "rejected";
+	rejectionReason?: string;
+	approvedBy?: number;
+	createdAt: string;
+	updatedAt: string;
+	reactionCount: number;
+	commentCount: number;
+	saveCount: number;
 }
 
 export interface Category {
-  id: string;
-  name: string;
-  description: string;
-  imageUrl: string;
-  imageHint: string;
+	id: string;
+	name: string;
+	description: string;
+	imageUrl: string;
+	imageHint: string;
+}
+
+// API specific types
+export interface LoginCredentials {
+	email: string;
+	password: string;
+}
+
+export interface RegisterData {
+	fullName: string;
+	email: string;
+	password: string;
+	birthDate: string;
+	collegeName: string;
+	country: string;
+	ssn: string;
+}
+
+export interface AuthResponse {
+	token: string;
+	user: User;
+}
+
+export interface PaperComment {
+	id: number;
+	userName: string;
+	userAvatar: string | null;
+	commentText: string;
+	createdAt: string;
+}
+
+export interface PaperUploadData {
+	title: string;
+	description: string;
+	categoryId: string;
+	pdfFile: File;
 }

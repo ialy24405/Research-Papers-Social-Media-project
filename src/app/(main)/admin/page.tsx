@@ -44,7 +44,7 @@ import {
             <TableBody>
               {allPapers.map((paper) => (
                 <TableRow key={paper.id}>
-                  <TableCell className="font-medium">{paper.name}</TableCell>
+                  <TableCell className="font-medium">{paper.title}</TableCell>
                   <TableCell>{paper.authorName}</TableCell>
                   <TableCell>
                     <Badge variant={statusVariant[paper.status]} className="capitalize">{paper.status}</Badge>
