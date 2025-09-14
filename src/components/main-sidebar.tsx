@@ -31,6 +31,7 @@ import { Separator } from "./ui/separator";
 
 const menuItems = [
 	{ href: "/home", label: "Home", icon: Home },
+	{ href: "/papers", label: "All Papers", icon: GraduationCap },
 	{ href: "/categories", label: "Categories", icon: BookCopy },
 	{ href: "/upload", label: "Upload Paper", icon: Upload },
 ];

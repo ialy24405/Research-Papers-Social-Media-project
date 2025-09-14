@@ -1,4 +1,28 @@
+# Research Papers Social Media Project
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+## Configuration
+
+Before running the project, you need to configure the backend URLs:
+
+1. **Copy the environment file:**
+
+   ```bash
+   cp .env.development.example .env.local
+   ```
+
+2. **Update the URLs in `.env.local`:**
+
+   ```bash
+   # Backend API URL
+   NEXT_PUBLIC_API_URL=http://localhost:3005/api
+
+   # Backend Server URL (for static files like PDFs)
+   NEXT_PUBLIC_SERVER_URL=http://localhost:3005
+   ```
+
+3. **For deployment, see [DEPLOYMENT_CONFIG.md](./DEPLOYMENT_CONFIG.md) for detailed configuration instructions.**
 
 ## Getting Started
 

@@ -68,7 +68,7 @@ export const papers: Paper[] = [
 		authorId: 2,
 		authorName: "Dr. Evelyn Reed",
 		authorAvatar: getPlaceholderImage("user-avatar-2")?.imageUrl || "",
-		pdfUrl: "/placeholder.pdf",
+		pdfUrl: "/uploads/paper-1757854893661-160046324.pdf",
 		categoryId: "cs",
 		categoryName: "Computer Science",
 		status: "approved",
@@ -78,6 +78,19 @@ export const papers: Paper[] = [
 		reactionCount: 120,
 		commentCount: 45,
 		saveCount: 88,
+		name: "",
+		category: {
+			id: "cs",
+			name: "Computer Science",
+			description: "Algorithms, data structures, AI, and more.",
+			imageUrl: getPlaceholderImage("category-cs")?.imageUrl || "",
+			imageHint: getPlaceholderImage("category-cs")?.imageHint || "",
+		},
+		interactions: {
+			comments: 45,
+			reactions: 120,
+			saves: 88,
+		},
 	},
 	{
 		id: 2,
@@ -97,6 +110,19 @@ export const papers: Paper[] = [
 		reactionCount: 256,
 		commentCount: 98,
 		saveCount: 150,
+		name: "",
+		category: {
+			id: "bio",
+			name: "Biology",
+			description: "Genetics, molecular biology, and ecology.",
+			imageUrl: getPlaceholderImage("category-bio")?.imageUrl || "",
+			imageHint: getPlaceholderImage("category-bio")?.imageHint || "",
+		},
+		interactions: {
+			comments: 98,
+			reactions: 256,
+			saves: 150,
+		},
 	},
 	{
 		id: 3,
@@ -115,6 +141,19 @@ export const papers: Paper[] = [
 		reactionCount: 0,
 		commentCount: 0,
 		saveCount: 0,
+		name: "",
+		category: {
+			id: "phy",
+			name: "Physics",
+			description: "Quantum mechanics, relativity, and cosmology.",
+			imageUrl: getPlaceholderImage("category-phy")?.imageUrl || "",
+			imageHint: getPlaceholderImage("category-phy")?.imageHint || "",
+		},
+		interactions: {
+			comments: 0,
+			reactions: 0,
+			saves: 0,
+		},
 	},
 	{
 		id: 4,
@@ -135,6 +174,19 @@ export const papers: Paper[] = [
 		reactionCount: 0,
 		commentCount: 0,
 		saveCount: 0,
+		name: "",
+		category: {
+			id: "chem",
+			name: "Chemistry",
+			description: "Organic, inorganic, and physical chemistry.",
+			imageUrl: getPlaceholderImage("category-chem")?.imageUrl || "",
+			imageHint: getPlaceholderImage("category-chem")?.imageHint || "",
+		},
+		interactions: {
+			comments: 0,
+			reactions: 0,
+			saves: 0,
+		},
 	},
 	{
 		id: 5,
@@ -154,6 +206,19 @@ export const papers: Paper[] = [
 		reactionCount: 301,
 		commentCount: 112,
 		saveCount: 205,
+		name: "",
+		category: {
+			id: "math",
+			name: "Mathematics",
+			description: "Calculus, algebra, and number theory.",
+			imageUrl: getPlaceholderImage("category-math")?.imageUrl || "",
+			imageHint: getPlaceholderImage("category-math")?.imageHint || "",
+		},
+		interactions: {
+			comments: 112,
+			reactions: 301,
+			saves: 205,
+		},
 	},
 ];
 

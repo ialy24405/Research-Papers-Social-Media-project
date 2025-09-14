@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { Logo } from "@/components/icons";
 import { Loader2 } from "lucide-react";
+import { ClientOnly } from "@/components/client-only";
 
 export default function LoginPage() {
 	const [email, setEmail] = useState("");
@@ -51,51 +52,88 @@ export default function LoginPage() {
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<form onSubmit={handleSubmit} className="grid gap-4">
-					{error && (
-						<div className="text-sm text-red-600 bg-red-50 p-3 rounded">
-							{error}
+				<ClientOnly
+					fallback={
+						<div className="grid gap-4">
+							<div className="text-sm text-muted-foreground bg-muted p-3 rounded">
+								Loading login form...
+							</div>
+							<div className="grid gap-2">
+								<Label htmlFor="email">Email</Label>
+								<Input
+									id="email"
+									type="email"
+									placeholder="m@example.com"
+									disabled
+								/>
+							</div>
+							<div className="grid gap-2">
+								<div className="flex items-center">
+									<Label htmlFor="password">Password</Label>
+									<Link
+										href="#"
+										className="ml-auto inline-block text-sm underline"
+									>
+										Forgot your password?
+									</Link>
+								</div>
+								<Input id="password" type="password" disabled />
+							</div>
+							<Button type="button" className="w-full" disabled>
+								Loading...
+							</Button>
 						</div>
-					)}
-					<div className="grid gap-2">
-						<Label htmlFor="email">Email</Label>
-						<Input
-							id="email"
-							type="email"
-							placeholder="m@example.com"
-							value={email}
-							onChange={(e) => setEmail(e.target.value)}
-							disabled={isLoading}
-							required
-						/>
-					</div>
-					<div className="grid gap-2">
-						<div className="flex items-center">
-							<Label htmlFor="password">Password</Label>
-							<Link href="#" className="ml-auto inline-block text-sm underline">
-								Forgot your password?
-							</Link>
-						</div>
-						<Input
-							id="password"
-							type="password"
-							value={password}
-							onChange={(e) => setPassword(e.target.value)}
-							disabled={isLoading}
-							required
-						/>
-					</div>
-					<Button type="submit" className="w-full" disabled={isLoading}>
-						{isLoading ? (
-							<>
-								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-								Logging in...
-							</>
-						) : (
-							"Login"
+					}
+				>
+					<form onSubmit={handleSubmit} className="grid gap-4">
+						{error && (
+							<div className="text-sm text-red-600 bg-red-50 p-3 rounded">
+								{error}
+							</div>
 						)}
-					</Button>
-				</form>
+						<div className="grid gap-2">
+							<Label htmlFor="email">Email</Label>
+							<Input
+								id="email"
+								type="email"
+								placeholder="m@example.com"
+								value={email}
+								onChange={(e) => setEmail(e.target.value)}
+								disabled={isLoading}
+								required
+							/>
+						</div>
+						<div className="grid gap-2">
+							<div className="flex items-center">
+								<Label htmlFor="password">Password</Label>
+								<Link
+									href="#"
+									className="ml-auto inline-block text-sm underline"
+								>
+									Forgot your password?
+								</Link>
+							</div>
+							<Input
+								id="password"
+								type="password"
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+								disabled={isLoading}
+								required
+							/>
+						</div>
+						<Button type="submit" className="w-full" disabled={isLoading}>
+							{isLoading ? (
+								<>
+									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+									Logging in...
+								</>
+							) : (
+								"Login"
+							)}
+						</Button>
+					</form>
+				</ClientOnly>
 				<div className="mt-4 text-center text-sm">
 					Don&apos;t have an account?{" "}
 					<Link href="/register" className="underline">

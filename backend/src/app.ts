@@ -15,8 +15,23 @@ import adminRoutes from "./api/routes/admin.routes";
 
 const app = express();
 
-// Security middleware
-app.use(helmet());
+// Security middleware with CSP configuration to allow iframe embedding
+app.use(
+	helmet({
+		contentSecurityPolicy: {
+			directives: {
+				...helmet.contentSecurityPolicy.getDefaultDirectives(),
+				"frame-ancestors": [
+					"'self'",
+					"http://localhost:3000",
+					"http://localhost:3001",
+					"http://127.0.0.1:3000",
+					"http://127.0.0.1:3001",
+				],
+			},
+		},
+	})
+);
 
 // Rate limiting
 const limiter = rateLimit({
@@ -48,9 +63,27 @@ app.use((req, res, next) => {
 });
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Static file serving for uploads
+// Static file serving for uploads with proper headers
 app.use(
 	"/uploads",
+	(req, res, next) => {
+		// Set CORS headers for file downloads
+		res.header("Access-Control-Allow-Origin", config.cors.origin);
+		res.header("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
+		res.header(
+			"Access-Control-Allow-Headers",
+			"Origin, X-Requested-With, Content-Type, Accept"
+		);
+
+		// Set proper content disposition for downloads
+		if (req.path.endsWith(".pdf")) {
+			const filename = path.basename(req.path);
+			res.header("Content-Type", "application/pdf");
+			res.header("Content-Disposition", `inline; filename="${filename}"`);
+		}
+
+		next();
+	},
 	express.static(path.join(process.cwd(), config.upload.directory))
 );
 

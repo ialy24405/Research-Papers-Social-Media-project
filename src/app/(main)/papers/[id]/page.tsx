@@ -16,6 +16,7 @@ import {
 	Lightbulb,
 } from "lucide-react";
 import { format } from "date-fns";
+import { getBackendUrl } from "@/lib/config";
 import {
 	Carousel,
 	CarouselContent,
@@ -93,7 +94,7 @@ export default function PaperPage({
 		.slice(0, 5)
 		.map((p) => ({
 			id: p.id,
-			title: p.title,
+			title: p.name,
 			author: p.authorName,
 			description: p.description,
 		}));
@@ -105,16 +106,21 @@ export default function PaperPage({
 					{/* Paper Header */}
 					<section>
 						<h1 className="text-3xl md:text-4xl font-bold font-headline tracking-tight">
-							{paper.title}
+							{paper.name}
 						</h1>
 						<div className="mt-4 flex items-center gap-4 text-sm text-muted-foreground">
 							<div className="flex items-center gap-2">
 								<Avatar className="h-8 w-8">
-									<AvatarImage
-										src={paper.authorAvatar || undefined}
-										alt={paper.authorName}
-									/>
-									<AvatarFallback>{paper.authorName.charAt(0)}</AvatarFallback>
+									{paper.authorAvatar ? (
+										<AvatarImage
+											src={paper.authorAvatar || undefined}
+											alt={paper.authorName}
+										/>
+									) : (
+										<AvatarFallback>
+											{paper.authorName.charAt(0)}
+										</AvatarFallback>
+									)}
 								</Avatar>
 								<span className="font-medium text-foreground">
 									{paper.authorName}
@@ -133,7 +139,7 @@ export default function PaperPage({
 					<Separator />
 
 					{/* AI Summary */}
-					<section>
+					{/* <section>
 						<div className="bg-secondary p-4 rounded-lg">
 							<h3 className="font-headline font-semibold text-lg flex items-center gap-2 mb-2">
 								<Lightbulb className="w-5 h-5 text-accent" />
@@ -143,16 +149,211 @@ export default function PaperPage({
 								{paper.description}
 							</p>
 						</div>
-					</section>
+					</section> */}
 
-					{/* PDF Viewer Placeholder */}
+					{/* PDF Viewer */}
 					<section>
 						<h2 className="text-2xl font-bold font-headline mb-4">
 							Paper Document
 						</h2>
-						<div className="aspect-video bg-muted rounded-lg flex items-center justify-center border">
-							<p className="text-muted-foreground">PDF Viewer Placeholder</p>
+						<div className="w-full border rounded-lg overflow-hidden bg-background">
+							{paper.pdfUrl ? (
+								(() => {
+									const pdfUrl = paper.pdfUrl.startsWith("http")
+										? paper.pdfUrl
+										: getBackendUrl(paper.pdfUrl);
+
+									// Function to handle PDF download
+									const handleDownload = async () => {
+										try {
+											console.log("Starting download for:", pdfUrl);
+											const response = await fetch(pdfUrl, {
+												mode: "cors",
+												credentials: "same-origin",
+											});
+
+											if (!response.ok) {
+												throw new Error(
+													`HTTP error! status: ${response.status}`
+												);
+											}
+
+											const contentType = response.headers.get("content-type");
+											console.log("Content type:", contentType);
+
+											const blob = await response.blob();
+											console.log("Blob size:", blob.size);
+
+											const url = window.URL.createObjectURL(blob);
+											const a = document.createElement("a");
+											a.href = url;
+											a.download = `${paper.name.replace(
+												/[^a-z0-9]/gi,
+												"_"
+											)}.pdf`;
+											a.style.display = "none";
+											document.body.appendChild(a);
+											a.click();
+
+											// Clean up
+											setTimeout(() => {
+												window.URL.revokeObjectURL(url);
+												document.body.removeChild(a);
+											}, 100);
+
+											console.log("Download initiated successfully");
+										} catch (error) {
+											console.error("Download failed:", error);
+											alert("Download failed. Opening PDF in new tab instead.");
+											// Fallback: open in new tab
+											window.open(pdfUrl, "_blank");
+										}
+									};
+
+									return (
+										<div className="space-y-4">
+											{/* PDF Display - Multiple Methods */}
+											<div className="border rounded-lg overflow-hidden bg-white">
+												{/* Method 1: Object tag with embed fallback */}
+												<object
+													data={pdfUrl}
+													type="application/pdf"
+													width="100%"
+													height="800px"
+													className="block"
+												>
+													{/* Fallback 1: Embed tag */}
+													<embed
+														src={pdfUrl}
+														type="application/pdf"
+														width="100%"
+														height="800px"
+													/>
+
+													{/* Fallback 2: Manual options */}
+													<div className="p-8 text-center space-y-4">
+														<div className="w-16 h-16 mx-auto bg-muted rounded-lg flex items-center justify-center">
+															<svg
+																className="w-8 h-8 text-muted-foreground"
+																fill="none"
+																stroke="currentColor"
+																viewBox="0 0 24 24"
+															>
+																<path
+																	strokeLinecap="round"
+																	strokeLinejoin="round"
+																	strokeWidth={2}
+																	d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+																/>
+															</svg>
+														</div>
+														<div>
+															<h3 className="text-lg font-semibold mb-2">
+																PDF Viewer Not Available
+															</h3>
+															<p className="text-muted-foreground mb-4">
+																Your browser doesn't support inline PDF viewing.
+															</p>
+															<div className="flex gap-2 justify-center">
+																<Button asChild>
+																	<a
+																		href={pdfUrl}
+																		target="_blank"
+																		rel="noopener noreferrer"
+																	>
+																		Open PDF in New Tab
+																	</a>
+																</Button>
+																<Button
+																	variant="outline"
+																	onClick={handleDownload}
+																>
+																	Download PDF
+																</Button>
+															</div>
+														</div>
+													</div>
+												</object>
+											</div>
+										</div>
+									);
+								})()
+							) : (
+								<div className="aspect-video bg-muted rounded-lg flex flex-col items-center justify-center border-2 border-dashed">
+									<div className="text-center space-y-2">
+										<div className="w-16 h-16 mx-auto bg-muted-foreground/10 rounded-lg flex items-center justify-center">
+											<svg
+												className="w-8 h-8 text-muted-foreground"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth={2}
+													d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+												/>
+											</svg>
+										</div>
+										<p className="text-muted-foreground font-medium">
+											PDF document not available
+										</p>
+										<p className="text-sm text-muted-foreground">
+											The PDF file for this paper is not currently accessible
+										</p>
+									</div>
+								</div>
+							)}
 						</div>
+						{paper.pdfUrl && (
+							<div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
+								<p>
+									Having trouble viewing? Try opening in a{" "}
+									<a
+										href={
+											paper.pdfUrl.startsWith("http")
+												? paper.pdfUrl
+												: getBackendUrl(paper.pdfUrl)
+										}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="text-primary hover:underline"
+									>
+										new tab
+									</a>
+								</p>
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => {
+										const pdfUrl = paper.pdfUrl.startsWith("http")
+											? paper.pdfUrl
+											: getBackendUrl(paper.pdfUrl);
+
+										fetch(pdfUrl, { mode: "cors" })
+											.then((response) => response.blob())
+											.then((blob) => {
+												const url = window.URL.createObjectURL(blob);
+												const a = document.createElement("a");
+												a.href = url;
+												a.download = `${paper.name.replace(
+													/[^a-z0-9]/gi,
+													"_"
+												)}.pdf`;
+												document.body.appendChild(a);
+												a.click();
+												window.URL.revokeObjectURL(url);
+												document.body.removeChild(a);
+											})
+											.catch(() => window.open(pdfUrl, "_blank"));
+									}}
+								>
+									<Download className="mr-2 h-4 w-4" />
+									Download PDF
+								</Button>
+							</div>
+						)}
 					</section>
 
 					<Separator />
@@ -186,7 +387,34 @@ export default function PaperPage({
 							<Button variant="outline" size="icon" className="h-11 w-11">
 								<Bookmark className="h-5 w-5" />
 							</Button>
-							<Button size="icon" className="h-11 w-11">
+							<Button
+								size="icon"
+								className="h-11 w-11"
+								onClick={() => {
+									if (paper.pdfUrl) {
+										const pdfUrl = paper.pdfUrl.startsWith("http")
+											? paper.pdfUrl
+											: getBackendUrl(paper.pdfUrl);
+
+										fetch(pdfUrl, { mode: "cors" })
+											.then((response) => response.blob())
+											.then((blob) => {
+												const url = window.URL.createObjectURL(blob);
+												const a = document.createElement("a");
+												a.href = url;
+												a.download = `${paper.name.replace(
+													/[^a-z0-9]/gi,
+													"_"
+												)}.pdf`;
+												document.body.appendChild(a);
+												a.click();
+												window.URL.revokeObjectURL(url);
+												document.body.removeChild(a);
+											})
+											.catch(() => window.open(pdfUrl, "_blank"));
+									}
+								}}
+							>
 								<Download className="h-5 w-5" />
 							</Button>
 						</div>

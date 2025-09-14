@@ -50,14 +50,13 @@ export function PaperCard({ paper }: PaperCardProps) {
 		pending: "secondary",
 		rejected: "destructive",
 	} as const;
-
 	return (
 		<Card className="flex flex-col">
 			<CardHeader>
 				<div className="flex items-start justify-between">
 					<Link href={`/papers/${paper.id}`} className="flex-1">
 						<CardTitle className="font-headline text-lg hover:text-primary transition-colors">
-							{paper.title}
+							{paper.name}
 						</CardTitle>
 					</Link>
 					<DropdownMenu>
@@ -93,13 +92,13 @@ export function PaperCard({ paper }: PaperCardProps) {
 			<CardFooter className="flex-col items-start gap-4">
 				<div className="flex items-center flex-wrap gap-4 text-sm text-muted-foreground">
 					<div className="flex items-center gap-1">
-						<Heart className="h-4 w-4" /> {paper.reactionCount}
+						<Heart className="h-4 w-4" /> {paper.interactions.reactions}
 					</div>
 					<div className="flex items-center gap-1">
-						<MessageCircle className="h-4 w-4" /> {paper.commentCount}
+						<MessageCircle className="h-4 w-4" /> {paper.interactions.comments}
 					</div>
 					<div className="flex items-center gap-1">
-						<Bookmark className="h-4 w-4" /> {paper.saveCount}
+						<Bookmark className="h-4 w-4" /> {paper.interactions.saves}
 					</div>
 				</div>
 				<div className="flex w-full items-center gap-2">

@@ -1,6 +1,8 @@
+import { config } from "../config";
+
 // API Configuration
 export const API_CONFIG = {
-	BASE_URL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3005/api",
+	BASE_URL: config.api.baseUrl,
 	TIMEOUT: 10000,
 } as const;
 

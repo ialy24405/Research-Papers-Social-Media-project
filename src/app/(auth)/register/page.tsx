@@ -17,6 +17,7 @@ import { Logo } from "@/components/icons";
 import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
+import { ClientOnly } from "@/components/client-only";
 
 export default function RegisterPage() {
 	const [formData, setFormData] = useState({
@@ -81,111 +82,121 @@ export default function RegisterPage() {
 				<CardDescription>Create your ScholarStream account</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<form onSubmit={handleSubmit} className="grid gap-4">
-					{error && (
-						<div className="text-sm text-red-600 bg-red-50 p-3 rounded">
-							{error}
+				<ClientOnly
+					fallback={
+						<div className="grid gap-4">
+							<div className="text-sm text-muted-foreground bg-muted p-3 rounded">
+								Loading registration form...
+							</div>
 						</div>
-					)}
-					<div className="grid gap-2">
-						<Label htmlFor="fullName">Full name</Label>
-						<Input
-							id="fullName"
-							name="fullName"
-							placeholder="John Doe"
-							value={formData.fullName}
-							onChange={handleChange}
-							disabled={isLoading}
-							required
-						/>
-					</div>
-					<div className="grid gap-2">
-						<Label htmlFor="email">Email</Label>
-						<Input
-							id="email"
-							name="email"
-							type="email"
-							placeholder="m@example.com"
-							value={formData.email}
-							onChange={handleChange}
-							disabled={isLoading}
-							required
-						/>
-					</div>
-					<div className="grid gap-2">
-						<Label htmlFor="password">Password</Label>
-						<Input
-							id="password"
-							name="password"
-							type="password"
-							placeholder="********"
-							value={formData.password}
-							onChange={handleChange}
-							disabled={isLoading}
-							required
-						/>
-					</div>
-					<EnhancedDatePicker
-						value={birthDate}
-						onChange={setBirthDate}
-						label="Birth date"
-						className="grid gap-2"
-					/>
-					<div className="grid gap-2">
-						<Label htmlFor="collegeName">College name</Label>
-						<Input
-							id="collegeName"
-							name="collegeName"
-							placeholder="University of Knowledge"
-							value={formData.collegeName}
-							onChange={handleChange}
-							disabled={isLoading}
-							required
-						/>
-					</div>
-					<div className="grid grid-cols-2 gap-4">
-						<div className="grid gap-2">
-							<Label htmlFor="country">Country</Label>
-							<Input
-								id="country"
-								name="country"
-								placeholder="USA"
-								value={formData.country}
-								onChange={handleChange}
-								disabled={isLoading}
-								required
-							/>
-						</div>
-						<div className="grid gap-2">
-							<Label htmlFor="ssn">SSN</Label>
-							<Input
-								id="ssn"
-								name="ssn"
-								placeholder="***-**-****"
-								value={formData.ssn}
-								onChange={handleChange}
-								disabled={isLoading}
-								required
-							/>
-						</div>
-					</div>
-					<Button type="submit" className="w-full" disabled={isLoading}>
-						{isLoading ? (
-							<>
-								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-								Creating account...
-							</>
-						) : (
-							"Create an account"
+					}
+				>
+					<form onSubmit={handleSubmit} className="grid gap-4">
+						{error && (
+							<div className="text-sm text-red-600 bg-red-50 p-3 rounded">
+								{error}
+							</div>
 						)}
-					</Button>
-				</form>
-				<div className="mt-4 text-center text-sm">
-					Already have an account?{" "}
-					<Link href="/login" className="underline">
-						Login
-					</Link>
-				</div>
+						<div className="grid gap-2">
+							<Label htmlFor="fullName">Full name</Label>
+							<Input
+								id="fullName"
+								name="fullName"
+								placeholder="John Doe"
+								value={formData.fullName}
+								onChange={handleChange}
+								disabled={isLoading}
+								required
+							/>
+						</div>
+						<div className="grid gap-2">
+							<Label htmlFor="email">Email</Label>
+							<Input
+								id="email"
+								name="email"
+								type="email"
+								placeholder="m@example.com"
+								value={formData.email}
+								onChange={handleChange}
+								disabled={isLoading}
+								required
+							/>
+						</div>
+						<div className="grid gap-2">
+							<Label htmlFor="password">Password</Label>
+							<Input
+								id="password"
+								name="password"
+								type="password"
+								placeholder="********"
+								value={formData.password}
+								onChange={handleChange}
+								disabled={isLoading}
+								required
+							/>
+						</div>
+						<EnhancedDatePicker
+							value={birthDate}
+							onChange={setBirthDate}
+							label="Birth date"
+							className="grid gap-2"
+						/>
+						<div className="grid gap-2">
+							<Label htmlFor="collegeName">College name</Label>
+							<Input
+								id="collegeName"
+								name="collegeName"
+								placeholder="University of Knowledge"
+								value={formData.collegeName}
+								onChange={handleChange}
+								disabled={isLoading}
+								required
+							/>
+						</div>
+						<div className="grid grid-cols-2 gap-4">
+							<div className="grid gap-2">
+								<Label htmlFor="country">Country</Label>
+								<Input
+									id="country"
+									name="country"
+									placeholder="USA"
+									value={formData.country}
+									onChange={handleChange}
+									disabled={isLoading}
+									required
+								/>
+							</div>
+							<div className="grid gap-2">
+								<Label htmlFor="ssn">SSN</Label>
+								<Input
+									id="ssn"
+									name="ssn"
+									placeholder="***-**-****"
+									value={formData.ssn}
+									onChange={handleChange}
+									disabled={isLoading}
+									required
+								/>
+							</div>
+						</div>
+						<Button type="submit" className="w-full" disabled={isLoading}>
+							{isLoading ? (
+								<>
+									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+									Creating account...
+								</>
+							) : (
+								"Create an account"
+							)}
+						</Button>
+					</form>
+					<div className="mt-4 text-center text-sm">
+						Already have an account?{" "}
+						<Link href="/login" className="underline">
+							Login
+						</Link>
+					</div>
+				</ClientOnly>
 			</CardContent>
 		</Card>
 	);

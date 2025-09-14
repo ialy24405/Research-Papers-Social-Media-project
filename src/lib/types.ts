@@ -14,11 +14,13 @@ export interface User {
 export interface Paper {
 	id: number;
 	title: string;
+  name : string;
 	description: string;
 	authorId: number;
 	authorName: string;
 	authorAvatar: string | null;
 	pdfUrl: string;
+  category : Category;
 	categoryId: string;
 	categoryName: string;
 	categoryDescription?: string;
@@ -30,8 +32,13 @@ export interface Paper {
 	reactionCount: number;
 	commentCount: number;
 	saveCount: number;
+  interactions : interactions;
 }
-
+export interface interactions {
+  comments : number;
+  reactions : number;
+  saves : number;
+}
 export interface Category {
 	id: string;
 	name: string;

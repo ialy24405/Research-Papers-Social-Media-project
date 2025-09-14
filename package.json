@@ -6,6 +6,7 @@
 		"dev": "next dev --turbopack",
 		"dev:fast": "node scripts/dev-with-warmup.js",
 		"dev:quick": "powershell -ExecutionPolicy Bypass -File scripts/dev-fast.ps1",
+		"setup-env": "node scripts/setup-env.js",
 		"start:dev": "scripts\\start-development.bat",
 		"build": "next build",
 		"build:analyze": "ANALYZE=true next build",

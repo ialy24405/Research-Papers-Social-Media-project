@@ -13,6 +13,28 @@ export interface PaperDetails extends Paper {
 	comments: PaperComment[];
 }
 
+// Helper function to convert snake_case to camelCase for Paper objects
+function transformPaper(paperData: any): Paper {
+	return {
+		...paperData,
+		pdfUrl: paperData.pdf_url || paperData.pdfUrl,
+		authorId: paperData.author_id || paperData.authorId,
+		authorName: paperData.author_name || paperData.authorName,
+		authorAvatar: paperData.author_avatar || paperData.authorAvatar,
+		categoryId: paperData.category_id || paperData.categoryId,
+		categoryName: paperData.category_name || paperData.categoryName,
+		createdAt: paperData.created_at || paperData.createdAt,
+		updatedAt: paperData.updated_at || paperData.updatedAt,
+		reactionCount: parseInt(
+			paperData.reaction_count || paperData.reactionCount || "0"
+		),
+		commentCount: parseInt(
+			paperData.comment_count || paperData.commentCount || "0"
+		),
+		saveCount: parseInt(paperData.save_count || paperData.saveCount || "0"),
+	};
+}
+
 export const paperService = {
 	/**
 	 * Get papers list with optional filters
@@ -24,9 +46,18 @@ export const paperService = {
 		if (params?.status) queryParams.status = params.status;
 		if (params?.limit) queryParams.limit = params.limit.toString();
 		if (params?.offset) queryParams.offset = params.offset.toString();
-        const response = await httpClient.get<Paper[]>(API_ENDPOINTS.PAPERS.LIST, queryParams);
-        console.log("getPapers response:", response);
-		return response;
+
+		const response = await httpClient.get<any[]>(
+			API_ENDPOINTS.PAPERS.LIST,
+			queryParams
+		);
+		console.log("getPapers raw response:", response);
+
+		// Transform snake_case to camelCase
+		const transformedPapers = response.map(transformPaper);
+		console.log("getPapers transformed:", transformedPapers);
+
+		return transformedPapers;
 	},
 
 	/**

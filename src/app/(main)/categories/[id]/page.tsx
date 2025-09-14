@@ -19,6 +19,7 @@ export default function CategoryPage({
 	const [id, setId] = useState<string>("");
 	const [category, setCategory] = useState<Category | null>(null);
 	const [papersInCategory, setPapersInCategory] = useState<Paper[]>([]);
+	const [categoryChecked, setCategoryChecked] = useState(false);
 
 	const { categories, isLoading: categoriesLoading } = useCategories();
 	const { papers, isLoading: papersLoading } = usePapers();
@@ -30,22 +31,34 @@ export default function CategoryPage({
 	}, [params]);
 
 	useEffect(() => {
-		if (id && categories.length > 0) {
-			const foundCategory = categories.find((c) => c.id === id);
-			setCategory(foundCategory || null);
+		if (id) {
+			// console.log("Category page - ID:", id);
+			// console.log("Categories loaded:", categories.length);
+			// console.log("Categories loading:", categoriesLoading);
+
+			if (categories.length > 0) {
+				const foundCategory = categories.find((c) => c.id === id);
+				// console.log("Found category:", foundCategory);
+				setCategory(foundCategory || null);
+				setCategoryChecked(true);
+			} else if (!categoriesLoading) {
+				// Categories finished loading but list is empty
+				// console.log("No categories found after loading completed");
+				setCategoryChecked(true);
+			}
 		}
-	}, [id, categories]);
+	}, [id, categories, categoriesLoading]);
 
 	useEffect(() => {
 		if (id && papers.length > 0) {
 			const filtered = papers.filter(
-				(p) => p.categoryId.toString() === id && p.status === "approved"
+				(p) => p.category.id === id && p.status === "approved"
 			);
 			setPapersInCategory(filtered);
 		}
 	}, [id, papers]);
 
-	if (categoriesLoading || papersLoading) {
+	if (categoriesLoading || papersLoading || !categoryChecked) {
 		return (
 			<div className="container mx-auto py-8">
 				<div className="mb-6">
