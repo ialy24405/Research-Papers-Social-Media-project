@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { query } from "@/lib/database";
+import { query } from "@/lib/db";
 import jwt from "jsonwebtoken";
 
 interface AuthenticatedRequest extends NextApiRequest {

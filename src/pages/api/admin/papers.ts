@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { query } from "@/lib/database";
+import { query } from "@/lib/db";
 import jwt from "jsonwebtoken";
 
 interface AuthenticatedRequest extends NextApiRequest {
@@ -152,17 +152,17 @@ export default async function handler(
 		const papersResult = await query(papersQuery, queryParams);
 
 		// Transform the data to match backend format
-		const papers = papersResult.rows.map((row) => ({
+		const papers = papersResult.rows.map((row: any) => ({
 			id: row.id,
 			title: row.title,
 			name: row.title, // Backend uses 'name' for title
-			description: row.abstract, // Backend uses 'description' for abstract
+			description: row.description, // Backend uses 'description' for description
 			authorId: row.author_id,
 			authorName: row.author_name,
 			authorAvatar: row.author_avatar,
 			categoryId: row.category_id,
 			categoryName: row.category_name,
-			pdfUrl: row.file_url, // Backend uses 'pdfUrl'
+			pdfUrl: row.pdf_url, // Backend uses 'pdfUrl'
 			status: row.status,
 			createdAt: row.created_at,
 			rejectionReason: row.rejection_reason,

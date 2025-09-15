@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { query } from "@/lib/database";
+import { query } from "@/lib/db";
 import jwt from "jsonwebtoken";
 
 interface AuthenticatedRequest extends NextApiRequest {
@@ -93,7 +93,7 @@ export default async function handler(
 				queryParams.slice(0, paramCount)
 			);
 
-			const users = usersResult.rows.map((row) => ({
+			const users = usersResult.rows.map((row: any) => ({
 				id: row.id,
 				email: row.email,
 				fullName: row.full_name,

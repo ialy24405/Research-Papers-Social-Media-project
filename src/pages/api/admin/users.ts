@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { query } from "@/lib/database";
+import { query } from "@/lib/db";
 import jwt from "jsonwebtoken";
 
 interface AuthRequest extends NextApiRequest {
@@ -42,11 +42,11 @@ export default async function handler(req: AuthRequest, res: NextApiResponse) {
 			SELECT 
 				id,
 				email,
-				name,
+				full_name as name,
 				role,
 				created_at,
-				profile_image,
-				last_login_at
+				avatar_url as profile_image,
+				last_login as last_login_at
 			FROM users
 		`;
 
@@ -61,7 +61,7 @@ export default async function handler(req: AuthRequest, res: NextApiResponse) {
 
 		if (search && typeof search === "string" && search.trim()) {
 			conditions.push(
-				`(email ILIKE $${params.length + 1} OR name ILIKE $${
+				`(email ILIKE $${params.length + 1} OR full_name ILIKE $${
 					params.length + 1
 				})`
 			);
