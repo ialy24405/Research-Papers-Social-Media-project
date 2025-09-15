@@ -114,13 +114,34 @@ export default async function handler(
 		const countResult = await query(countQuery, queryParams);
 		const totalPapers = parseInt(countResult.rows[0].total);
 
-		// Get papers with pagination
+		// Get papers with pagination and interaction counts
 		const papersQuery = `
-			SELECT p.*, u.full_name as author_name, u.email as author_email,
-				c.name as category_name
+			SELECT p.*, u.full_name as author_name, u.email as author_email, u.avatar_url as author_avatar,
+				c.name as category_name,
+				COALESCE(reaction_counts.reaction_count, 0) as reaction_count,
+				COALESCE(comment_counts.comment_count, 0) as comment_count,
+				COALESCE(save_counts.save_count, 0) as save_count,
+				p.rejection_reason,
+				p.approved_by as approved_by_id
 			FROM papers p 
 			JOIN users u ON p.author_id = u.id 
 			LEFT JOIN categories c ON p.category_id = c.id 
+			LEFT JOIN (
+				SELECT paper_id, COUNT(*) as reaction_count
+				FROM paper_reactions
+				GROUP BY paper_id
+			) reaction_counts ON p.id = reaction_counts.paper_id
+			LEFT JOIN (
+				SELECT paper_id, COUNT(*) as comment_count
+				FROM paper_comments
+				GROUP BY paper_id
+			) comment_counts ON p.id = comment_counts.paper_id
+			LEFT JOIN (
+				SELECT paper_id, COUNT(*) as save_count
+				FROM paper_interactions
+				WHERE interaction_type = 'save'
+				GROUP BY paper_id
+			) save_counts ON p.id = save_counts.paper_id
 			${whereClause}
 			ORDER BY p.created_at DESC
 			LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
@@ -130,21 +151,27 @@ export default async function handler(
 
 		const papersResult = await query(papersQuery, queryParams);
 
-		// Transform the data
+		// Transform the data to match backend format
 		const papers = papersResult.rows.map((row) => ({
 			id: row.id,
 			title: row.title,
-			abstract: row.abstract,
-			content: row.content,
-			fileUrl: row.file_url,
-			categoryId: row.category_id,
-			categoryName: row.category_name,
-			status: row.status,
-			createdAt: row.created_at,
-			updatedAt: row.updated_at,
+			name: row.title, // Backend uses 'name' for title
+			description: row.abstract, // Backend uses 'description' for abstract
 			authorId: row.author_id,
 			authorName: row.author_name,
-			authorEmail: row.author_email,
+			authorAvatar: row.author_avatar,
+			categoryId: row.category_id,
+			categoryName: row.category_name,
+			pdfUrl: row.file_url, // Backend uses 'pdfUrl'
+			status: row.status,
+			createdAt: row.created_at,
+			rejectionReason: row.rejection_reason,
+			approvedBy: row.approved_by_id,
+			interactions: {
+				reactions: parseInt(row.reaction_count) || 0,
+				comments: parseInt(row.comment_count) || 0,
+				saves: parseInt(row.save_count) || 0,
+			},
 		}));
 
 		// For backward compatibility with existing frontend, return just the papers array
