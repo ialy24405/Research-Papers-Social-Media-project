@@ -1,0 +1,55 @@
+{{
+
+  "framework": "nextjs",	"version": 2,
+
+  "buildCommand": "npm run build",	"builds": [
+
+  "outputDirectory": ".next",		{
+
+  "installCommand": "npm install",			"src": "backend/dist/server.js",
+
+  "functions": {			"use": "@vercel/node",
+
+    "src/pages/api/**/*.ts": {			"config": {
+
+      "runtime": "@vercel/node"				"includeFiles": ["backend/dist/**", "backend/uploads/**"]
+
+    }			}
+
+  }		},
+
+}		{
+			"src": "package.json",
+			"use": "@vercel/static-build",
+			"config": {
+				"distDir": ".next"
+			}
+		}
+	],
+	"routes": [
+		{
+			"src": "/api/(.*)",
+			"dest": "/backend/dist/server.js"
+		},
+		{
+			"src": "/(.*)",
+			"dest": "/$1"
+		}
+	],
+	"env": {
+		"NODE_ENV": "production",
+		"JWT_SECRET": "@jwt-secret",
+		"JWT_EXPIRES_IN": "24h",
+		"DB_HOST": "@db-host",
+		"DB_PORT": "@db-port",
+		"DB_NAME": "@db-name",
+		"DB_USER": "@db-user",
+		"DB_PASSWORD": "@db-password"
+	},
+	"build": {
+		"env": {
+			"NEXT_PUBLIC_API_URL": "/api",
+			"NEXT_PUBLIC_SERVER_URL": ""
+		}
+	}
+}
