@@ -1,5 +1,11 @@
 /**
- * Application Configuration
+ * Applicati			: process.env.NEXT_PUBLIC_API_URL || "/api",
+
+		// Backend server URL (without /api suffix)
+		serverUrl:
+			process.env.NEXT_PUBLIC_SERVER_URL ||
+			process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") ||
+			"http://localhost:3000",iguration
  *
  * Centralized configuration for API endpoints and environment-specific settings.
  * Update these values for different deployment environments.
@@ -8,14 +14,20 @@
 export const config = {
 	// API Configuration
 	api: {
-		// Base URL for the backend API
-		baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3005/api",
+		// Base URL for the backend API - ensure it's absolute for HTTP client
+		baseUrl: process.env.NEXT_PUBLIC_API_URL?.startsWith("/")
+			? `${
+					typeof window !== "undefined"
+						? window.location.origin
+						: "http://localhost:3000"
+			  }${process.env.NEXT_PUBLIC_API_URL}`
+			: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api",
 
 		// Backend server URL (without /api suffix)
 		serverUrl:
 			process.env.NEXT_PUBLIC_SERVER_URL ||
 			process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") ||
-			"http://localhost:3005",
+			"http://localhost:3000",
 	},
 
 	// Upload Configuration

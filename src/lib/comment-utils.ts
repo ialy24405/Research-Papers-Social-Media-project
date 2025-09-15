@@ -2,6 +2,8 @@
  * Comment utilities for papers
  */
 
+import { getApiUrl } from "./config";
+
 export interface Comment {
 	id: number;
 	user: {
@@ -62,17 +64,14 @@ export const addComment = async (
 		console.log("📤 Request body:", requestBody);
 		console.log("🔑 Auth token:", token ? "Present" : "Missing");
 
-		const response = await fetch(
-			`http://localhost:3005/api/papers/${paperId}/comment`,
-			{
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${token}`,
-				},
-				body: JSON.stringify(requestBody),
-			}
-		);
+		const response = await fetch(getApiUrl(`/papers/${paperId}/comment`), {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				Authorization: `Bearer ${token}`,
+			},
+			body: JSON.stringify(requestBody),
+		});
 
 		console.log("📡 Comment API response:", {
 			status: response.status,
@@ -155,9 +154,7 @@ export const getComments = async (
 	try {
 		console.log("🔄 Fetching comments for paper:", paperId);
 
-		const response = await fetch(
-			`http://localhost:3005/api/papers/${paperId}/comments`
-		);
+		const response = await fetch(getApiUrl(`/papers/${paperId}/comments`));
 
 		console.log("📡 Comments API response:", {
 			status: response.status,

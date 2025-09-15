@@ -2,6 +2,8 @@
  * Save utilities for papers
  */
 
+import { getApiUrl } from "./config";
+
 export interface SaveData {
 	paperId: number;
 	userId?: number;
@@ -71,15 +73,12 @@ export const isPaperSavedOnServer = async (
 		if (!token) return null;
 
 		// Get all saved papers from server
-		const response = await fetch(
-			"http://localhost:3005/api/users/me/saved-papers",
-			{
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${token}`,
-				},
-			}
-		);
+		const response = await fetch(getApiUrl("/users/me/saved-papers"), {
+			headers: {
+				"Content-Type": "application/json",
+				Authorization: `Bearer ${token}`,
+			},
+		});
 
 		if (!response.ok) {
 			console.error(
@@ -197,7 +196,7 @@ export const togglePaperSave = async (
 		});
 
 		// Try to make API call to backend
-		const url = `http://localhost:3005/api/papers/${paperId}/save`;
+		const url = getApiUrl(`/papers/${paperId}/save`);
 		console.log("📡 Making API call:", { url, method });
 
 		const response = await fetch(url, {

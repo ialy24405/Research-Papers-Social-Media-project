@@ -1,0 +1,61 @@
+# Backend Dockerfile
+FROM node:trixie-slim AS base
+
+# Install dependencies
+FROM base AS deps
+WORKDIR /app
+
+# Install build dependencies for native modules
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy package files
+COPY src/server/package.json src/server/package-lock.json* ./
+RUN npm ci --only=production && npm rebuild bcrypt --build-from-source
+
+# Build stage
+FROM base AS builder
+WORKDIR /app
+
+# Install build dependencies for native modules
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY src/server/ ./
+
+# Rebuild native modules for the current architecture
+RUN npm rebuild bcrypt --build-from-source
+
+# Build the TypeScript application
+RUN npm run build
+
+# Production image
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV production
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 backend
+
+# Copy built application
+COPY --from=builder --chown=backend:nodejs /app/dist ./dist
+COPY --from=builder --chown=backend:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=backend:nodejs /app/package.json ./package.json
+
+# Create uploads directory
+RUN mkdir -p uploads && chown backend:nodejs uploads
+
+USER backend
+
+EXPOSE 3005
+
+CMD ["npm", "start"]

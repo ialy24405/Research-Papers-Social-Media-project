@@ -32,6 +32,14 @@ import {
 	Shield,
 	User,
 	AlertCircle,
+	BarChart3,
+	Users,
+	FileText,
+	Calendar,
+	TrendingUp,
+	MessageSquare,
+	Heart,
+	Bookmark,
 } from "lucide-react";
 import {
 	DropdownMenu,
@@ -55,6 +63,7 @@ import {
 	useAdminCategories,
 	AdminCategory,
 } from "@/hooks/use-admin-categories";
+import { useAdminInsights } from "@/hooks/use-admin-insights";
 import { useState, useRef, useEffect } from "react";
 import { format } from "date-fns";
 import {
@@ -67,6 +76,327 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
+function InsightsTab() {
+	const { data: insights, loading, error, refetch } = useAdminInsights();
+
+	if (loading) {
+		return (
+			<div className="space-y-4">
+				<Card>
+					<CardHeader>
+						<CardTitle className="flex items-center gap-2">
+							<BarChart3 className="h-5 w-5" />
+							Dashboard Insights
+						</CardTitle>
+						<CardDescription>
+							Comprehensive analytics and statistics for your platform.
+						</CardDescription>
+					</CardHeader>
+					<CardContent>
+						<div className="text-center py-20">
+							<RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
+							<p className="text-muted-foreground">Loading insights...</p>
+						</div>
+					</CardContent>
+				</Card>
+			</div>
+		);
+	}
+
+	if (error) {
+		return (
+			<Card>
+				<CardHeader>
+					<CardTitle className="flex items-center gap-2">
+						<AlertCircle className="h-5 w-5" />
+						Error Loading Insights
+					</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<Alert>
+						<AlertCircle className="h-4 w-4" />
+						<AlertTitle>Failed to load insights</AlertTitle>
+						<AlertDescription>{error}</AlertDescription>
+					</Alert>
+					<Button onClick={refetch} className="mt-4">
+						<RefreshCw className="h-4 w-4 mr-2" />
+						Try Again
+					</Button>
+				</CardContent>
+			</Card>
+		);
+	}
+
+	if (!insights) {
+		return (
+			<Card>
+				<CardHeader>
+					<CardTitle>No Data Available</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<p className="text-muted-foreground">No insights data available.</p>
+				</CardContent>
+			</Card>
+		);
+	}
+
+	return (
+		<div className="space-y-6">
+			{/* Header */}
+			<div className="flex items-center justify-between">
+				<div>
+					<h1 className="text-2xl font-bold">Dashboard Insights</h1>
+					<p className="text-muted-foreground">
+						Comprehensive analytics and statistics for your platform.
+					</p>
+				</div>
+				<Button onClick={refetch} variant="outline">
+					<RefreshCw className="h-4 w-4 mr-2" />
+					Refresh
+				</Button>
+			</div>
+
+			{/* Overview Stats */}
+			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+				<Card>
+					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+						<CardTitle className="text-sm font-medium">Total Papers</CardTitle>
+						<FileText className="h-4 w-4 text-muted-foreground" />
+					</CardHeader>
+					<CardContent>
+						<div className="text-2xl font-bold">
+							{insights.overview.totalPapers}
+						</div>
+						<p className="text-xs text-muted-foreground">
+							{insights.overview.approvedPapers} approved,{" "}
+							{insights.overview.pendingPapers} pending,{" "}
+							{insights.overview.rejectedPapers} rejected
+						</p>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+						<CardTitle className="text-sm font-medium">Total Users</CardTitle>
+						<Users className="h-4 w-4 text-muted-foreground" />
+					</CardHeader>
+					<CardContent>
+						<div className="text-2xl font-bold">
+							{insights.overview.totalUsers}
+						</div>
+						<p className="text-xs text-muted-foreground">
+							{insights.overview.ownerUsers} owners,{" "}
+							{insights.overview.adminUsers} admins,{" "}
+							{insights.overview.regularUsers} users
+						</p>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+						<CardTitle className="text-sm font-medium">Categories</CardTitle>
+						<BarChart3 className="h-4 w-4 text-muted-foreground" />
+					</CardHeader>
+					<CardContent>
+						<div className="text-2xl font-bold">
+							{insights.overview.totalCategories}
+						</div>
+						<p className="text-xs text-muted-foreground">Active categories</p>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+						<CardTitle className="text-sm font-medium">Interactions</CardTitle>
+						<TrendingUp className="h-4 w-4 text-muted-foreground" />
+					</CardHeader>
+					<CardContent>
+						<div className="text-2xl font-bold">
+							{insights.overview.totalComments + insights.overview.totalSaves}
+						</div>
+						<p className="text-xs text-muted-foreground">
+							{insights.overview.totalComments} comments,{" "}
+							{insights.overview.totalSaves} saves
+						</p>
+					</CardContent>
+				</Card>
+			</div>
+
+			{/* Charts Section */}
+			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+				{/* Top Categories */}
+				<Card>
+					<CardHeader>
+						<CardTitle className="flex items-center gap-2">
+							<BarChart3 className="h-5 w-5" />
+							Top Categories by Papers
+						</CardTitle>
+						<CardDescription>
+							Categories with the most paper submissions
+						</CardDescription>
+					</CardHeader>
+					<CardContent>
+						<div className="space-y-3">
+							{insights.charts.topCategories.slice(0, 8).map((category) => (
+								<div
+									key={category.id}
+									className="flex items-center justify-between"
+								>
+									<div className="flex-1">
+										<div className="font-medium">{category.name}</div>
+										<div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+											<div
+												className="bg-primary h-2 rounded-full transition-all"
+												style={{
+													width: `${
+														(category.paper_count /
+															insights.charts.topCategories[0]?.paper_count) *
+														100
+													}%`,
+												}}
+											/>
+										</div>
+									</div>
+									<div className="ml-4 text-sm font-medium">
+										{category.paper_count}
+									</div>
+								</div>
+							))}
+						</div>
+					</CardContent>
+				</Card>
+
+				{/* Reaction Distribution */}
+				<Card>
+					<CardHeader>
+						<CardTitle className="flex items-center gap-2">
+							<Heart className="h-5 w-5" />
+							Reaction Distribution
+						</CardTitle>
+						<CardDescription>
+							Distribution of user reactions on papers
+						</CardDescription>
+					</CardHeader>
+					<CardContent>
+						<div className="space-y-3">
+							{insights.charts.reactionDistribution.map((reaction) => (
+								<div
+									key={reaction.reaction_type}
+									className="flex items-center justify-between"
+								>
+									<div className="flex items-center gap-2">
+										{reaction.reaction_type === "like" && (
+											<Heart className="h-4 w-4 text-red-500" />
+										)}
+										{reaction.reaction_type === "love" && (
+											<Heart className="h-4 w-4 text-pink-500" />
+										)}
+										{reaction.reaction_type === "wow" && (
+											<span className="text-lg">😮</span>
+										)}
+										{reaction.reaction_type === "angry" && (
+											<span className="text-lg">😠</span>
+										)}
+										{reaction.reaction_type === "sad" && (
+											<span className="text-lg">😢</span>
+										)}
+										<span className="capitalize font-medium">
+											{reaction.reaction_type}
+										</span>
+									</div>
+									<Badge variant="secondary">{reaction.count}</Badge>
+								</div>
+							))}
+						</div>
+					</CardContent>
+				</Card>
+			</div>
+
+			{/* Lists Section */}
+			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+				{/* Most Active Users */}
+				<Card>
+					<CardHeader>
+						<CardTitle className="flex items-center gap-2">
+							<Users className="h-5 w-5" />
+							Most Active Users
+						</CardTitle>
+						<CardDescription>
+							Users with the most paper submissions
+						</CardDescription>
+					</CardHeader>
+					<CardContent>
+						<div className="space-y-3">
+							{insights.lists.mostActiveUsers.slice(0, 8).map((user, index) => (
+								<div
+									key={user.id}
+									className="flex items-center justify-between"
+								>
+									<div className="flex items-center gap-3">
+										<div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+											{index + 1}
+										</div>
+										<div>
+											<div className="font-medium">{user.full_name}</div>
+											<div className="text-sm text-muted-foreground">
+												{user.email}
+											</div>
+										</div>
+									</div>
+									<Badge variant="outline">{user.paper_count} papers</Badge>
+								</div>
+							))}
+						</div>
+					</CardContent>
+				</Card>
+
+				{/* Recent Activity */}
+				<Card>
+					<CardHeader>
+						<CardTitle className="flex items-center gap-2">
+							<Calendar className="h-5 w-5" />
+							Recent Activity
+						</CardTitle>
+						<CardDescription>
+							Latest activity on the platform (last 7 days)
+						</CardDescription>
+					</CardHeader>
+					<CardContent>
+						<div className="space-y-3">
+							{insights.lists.recentActivity
+								.slice(0, 8)
+								.map((activity, index) => (
+									<div key={index} className="flex items-start gap-3">
+										<div className="mt-1">
+											{activity.activity_type === "paper_submission" && (
+												<FileText className="h-4 w-4 text-blue-500" />
+											)}
+											{activity.activity_type === "user_registration" && (
+												<Users className="h-4 w-4 text-green-500" />
+											)}
+										</div>
+										<div className="flex-1 min-w-0">
+											<p className="text-sm font-medium">
+												{activity.description}
+											</p>
+											<p className="text-xs text-muted-foreground">
+												{activity.user_name} •{" "}
+												{format(
+													new Date(activity.timestamp),
+													"MMM d, yyyy 'at' h:mm a"
+												)}
+											</p>
+										</div>
+									</div>
+								))}
+						</div>
+					</CardContent>
+				</Card>
+			</div>
+		</div>
+	);
+}
 
 export default function AdminPage() {
 	const {
@@ -1120,15 +1450,7 @@ export default function AdminPage() {
 					<CategoriesTab />
 				</TabsContent>
 				<TabsContent value="insights">
-					<Card>
-						<CardHeader>
-							<CardTitle>General Insights</CardTitle>
-							<CardDescription>This feature is coming soon.</CardDescription>
-						</CardHeader>
-						<CardContent className="text-center py-20 text-muted-foreground">
-							<p>Analytics and insights dashboard will be here.</p>
-						</CardContent>
-					</Card>
+					<InsightsTab />
 				</TabsContent>
 			</Tabs>
 		</div>

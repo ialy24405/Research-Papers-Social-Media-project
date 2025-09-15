@@ -173,7 +173,9 @@ if (require.main === module) {
 	const server = app.listen(PORT, () => {
 		console.log(`🚀 ScholarStream Backend running on port ${PORT}`);
 		console.log(`📚 Environment: ${config.nodeEnv}`);
-		console.log(`🔗 API Base URL: http://localhost:${PORT}/api`);
+		console.log(
+			`🔗 API accessible at: http://localhost:3000/api (via nginx proxy)`
+		);
 		console.log(`📁 Upload directory: ${config.upload.directory}`);
 	});
 

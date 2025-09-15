@@ -18,8 +18,20 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useUserPapers } from "@/hooks/use-user-papers";
 import { useAuth } from "@/hooks/use-auth";
+import { usePaperDelete } from "@/hooks/use-paper-delete";
 import {
 	BarChart,
 	MessageCircle,
@@ -30,6 +42,7 @@ import {
 	Heart,
 	Save,
 	Share,
+	Trash2,
 } from "lucide-react";
 import {
 	DropdownMenu,
@@ -38,6 +51,7 @@ import {
 	DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
+import { useState } from "react";
 
 export default function PostStatusPage() {
 	const { user, isLoading: authLoading } = useAuth();
@@ -45,13 +59,30 @@ export default function PostStatusPage() {
 		papers: userPapers = [],
 		isLoading: papersLoading,
 		error,
+		refetch,
 	} = useUserPapers();
+	const { deletePaper, isDeleting, error: deleteError } = usePaperDelete();
+
+	const [paperToDelete, setPaperToDelete] = useState<number | null>(null);
 
 	const approvedPapers = userPapers.filter((p) => p.status === "approved");
 	const pendingPapers = userPapers.filter((p) => p.status === "pending");
 	const rejectedPapers = userPapers.filter((p) => p.status === "rejected");
 
-	console.log("User papers:", userPapers);  
+	console.log("User papers:", userPapers);
+
+	const handleDeletePaper = async (paperId: number) => {
+		const result = await deletePaper(paperId);
+
+		if (result.success) {
+			setPaperToDelete(null);
+			// Refresh the papers list
+			refetch();
+		} else {
+			// Error will be shown through the deleteError state
+			console.error("Failed to delete paper:", result.error);
+		}
+	};
 
 	if (authLoading || papersLoading) {
 		return (
@@ -189,6 +220,13 @@ export default function PostStatusPage() {
 												No actions available
 											</DropdownMenuItem>
 										)}
+										<DropdownMenuItem
+											className="text-destructive focus:text-destructive"
+											onClick={() => setPaperToDelete(paper.id)}
+										>
+											<Trash2 className="mr-2 h-4 w-4" />
+											Delete Paper
+										</DropdownMenuItem>
 									</DropdownMenuContent>
 								</DropdownMenu>
 							</TableCell>
@@ -239,6 +277,40 @@ export default function PostStatusPage() {
 					</Tabs>
 				</CardContent>
 			</Card>
+
+			{/* Delete Confirmation Dialog */}
+			<AlertDialog
+				open={paperToDelete !== null}
+				onOpenChange={(open: boolean) => !open && setPaperToDelete(null)}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Are you sure?</AlertDialogTitle>
+						<AlertDialogDescription>
+							This action cannot be undone. This will permanently delete your
+							paper and all associated data including comments, reactions, and
+							saves.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+						<AlertDialogAction
+							onClick={() => paperToDelete && handleDeletePaper(paperToDelete)}
+							disabled={isDeleting}
+							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+						>
+							{isDeleting ? "Deleting..." : "Delete"}
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+
+			{/* Show delete error if any */}
+			{deleteError && (
+				<div className="fixed bottom-4 right-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+					Error: {deleteError}
+				</div>
+			)}
 		</div>
 	);
 }

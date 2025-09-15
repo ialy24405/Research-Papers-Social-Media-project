@@ -1,0 +1,70 @@
+# Unified Dockerfile for Frontend and Backend
+FROM node:trixie-slim as base
+
+# Install build tools for native modules
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Dependencies stage
+FROM base as deps
+
+# Copy package files
+COPY package.json package-lock.json* ./
+COPY src/server/package.json ./src/server/
+
+# Install all dependencies
+RUN npm ci
+RUN cd src/server && npm install
+
+# Builder stage
+FROM base as builder
+
+# Copy dependencies
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/src/server/node_modules ./src/server/node_modules
+
+# Copy source code
+COPY . .
+
+# Build frontend
+RUN npm run build:frontend
+
+# Build backend
+RUN npm run build:backend
+
+# Production stage
+FROM base as runner
+
+# Create user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 appuser
+
+# Set working directory
+WORKDIR /app
+
+# Copy built applications
+COPY --from=builder --chown=appuser:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=appuser:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=appuser:nodejs /app/public ./public
+COPY --from=builder --chown=appuser:nodejs /app/src/server/dist ./src/server/dist
+COPY --from=builder --chown=appuser:nodejs /app/src/server/node_modules ./src/server/node_modules
+COPY --from=builder --chown=appuser:nodejs /app/src/server/package.json ./src/server/package.json
+
+# Create uploads directory
+RUN mkdir -p uploads && chown appuser:nodejs uploads
+
+USER appuser
+
+# Expose port
+EXPOSE 3000
+
+# Start script
+COPY --chown=appuser:nodejs start-unified.sh ./
+RUN chmod +x start-unified.sh
+
+CMD ["./start-unified.sh"]

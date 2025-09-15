@@ -19,32 +19,32 @@ export function Footer() {
             </p>
           </div>
           <div>
-            <h4 className="font-semibold font-headline mb-4">Company</h4>
+            <h4 className="font-semibold font-headline mb-4">Developer</h4>
             <ul className="space-y-2">
-              <li><Link href="#" className="text-sm text-muted-foreground hover:text-foreground">About Us</Link></li>
-              <li><Link href="#" className="text-sm text-muted-foreground hover:text-foreground">Careers</Link></li>
-              <li><Link href="#" className="text-sm text-muted-foreground hover:text-foreground">Contact</Link></li>
+              <li><Link href="https://github.com/ialy24405" className="text-sm text-muted-foreground hover:text-foreground">About Us</Link></li>
+              {/* <li><Link href="#" className="text-sm text-muted-foreground hover:text-foreground">Contact</Link></li> */}
             </ul>
           </div>
-          <div>
+          {/* <div>
             <h4 className="font-semibold font-headline mb-4">Legal</h4>
             <ul className="space-y-2">
               <li><Link href="#" className="text-sm text-muted-foreground hover:text-foreground">Terms of Service</Link></li>
               <li><Link href="#" className="text-sm text-muted-foreground hover:text-foreground">Privacy Policy</Link></li>
               <li><Link href="#" className="text-sm text-muted-foreground hover:text-foreground">Cookie Policy</Link></li>
             </ul>
-          </div>
+          </div> */}
           <div>
             <h4 className="font-semibold font-headline mb-4">Follow Us</h4>
             <div className="flex gap-4">
-              <Link href="#" className="text-muted-foreground hover:text-foreground"><Twitter size={20} /></Link>
-              <Link href="#" className="text-muted-foreground hover:text-foreground"><Github size={20} /></Link>
-              <Link href="#" className="text-muted-foreground hover:text-foreground"><Linkedin size={20} /></Link>
+                <Link href="https://github.com/ialy24405" className="text-muted-foreground hover:text-foreground"><Github size={20} /></Link>
+              <Link href="https://www.linkedin.com/in/aly-ebrahim/" className="text-muted-foreground hover:text-foreground"><Linkedin size={20} /></Link>
             </div>
           </div>
         </div>
         <div className="mt-8 pt-8 border-t text-center text-sm text-muted-foreground">
           <p>&copy; {new Date().getFullYear()} ScholarStream. All rights reserved.</p>
+          <br />
+          <p>Built with ❤️ by <a href="https://www.linkedin.com/in/aly-ebrahim/">Aly Ebrahim</a>.</p>
         </div>
       </div>
     </footer>

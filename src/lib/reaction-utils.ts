@@ -2,6 +2,8 @@
  * Reaction utilities for papers and content
  */
 
+import { getApiUrl } from "./config";
+
 export interface ReactionData {
 	paperId: number;
 	userId?: number;
@@ -54,7 +56,7 @@ export const togglePaperReaction = async (
 		});
 
 		// Try to make API call to backend
-		const response = await fetch("http://localhost:3005/api/reactions/toggle", {
+		const response = await fetch(getApiUrl("/reactions/toggle"), {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
@@ -309,14 +311,11 @@ export const getReactionStats = async (
 	try {
 		const token =
 			localStorage.getItem("auth_token") || localStorage.getItem("token");
-		const response = await fetch(
-			`http://localhost:3005/api/reactions/stats/${paperId}`,
-			{
-				headers: {
-					...(token && { Authorization: `Bearer ${token}` }),
-				},
-			}
-		);
+		const response = await fetch(getApiUrl(`/reactions/stats/${paperId}`), {
+			headers: {
+				...(token && { Authorization: `Bearer ${token}` }),
+			},
+		});
 
 		if (response.ok) {
 			const result = await response.json();
@@ -388,14 +387,11 @@ export const getUserReactionFromAPI = async (
 			!!token
 		);
 
-		const response = await fetch(
-			`http://localhost:3005/api/reactions/user/${paperId}`,
-			{
-				headers: {
-					...(token && { Authorization: `Bearer ${token}` }),
-				},
-			}
-		);
+		const response = await fetch(getApiUrl(`/reactions/user/${paperId}`), {
+			headers: {
+				...(token && { Authorization: `Bearer ${token}` }),
+			},
+		});
 
 		console.log("📡 User reaction API response:", {
 			status: response.status,

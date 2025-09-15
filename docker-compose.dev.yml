@@ -1,33 +1,30 @@
-version: "3.8"
+﻿version: "3.8"
 
 services:
-  papers-app-dev:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
-    ports:
-      - "3000:3000"
+  # PostgreSQL Database
+  database:
+    image: postgres:15-alpine
+    container_name: papers-db-dev
     environment:
-      - NODE_ENV=development
-      - NEXT_TELEMETRY_DISABLED=1
+      POSTGRES_DB: papers_social_media_dev
+      POSTGRES_USER: papers_user
+      POSTGRES_PASSWORD: papers_password
+    ports:
+      - "5432:5432"
     volumes:
-      - .:/app
-      - /app/node_modules
-      - /app/.next
+      - postgres_data_dev:/var/lib/postgresql/data
+      - ./backend/migrations:/docker-entrypoint-initdb.d
     restart: unless-stopped
-    command: npm run dev
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U papers_user -d papers_social_media_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # Optional: Hot reloading development setup
-  # papers-app-dev:
-  #   image: node:18-alpine
-  #   working_dir: /app
-  #   ports:
-  #     - "3000:3000"
-  #   environment:
-  #     - NODE_ENV=development
-  #     - NEXT_TELEMETRY_DISABLED=1
-  #   volumes:
-  #     - .:/app
-  #     - /app/node_modules
-  #   command: sh -c "npm install && npm run dev"
-  #   restart: unless-stopped
+volumes:
+  postgres_data_dev:
+    driver: local
+
+networks:
+  default:
+    name: papers-network-dev

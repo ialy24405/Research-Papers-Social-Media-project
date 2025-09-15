@@ -1,57 +1,89 @@
-version: "3.8"
+﻿# Docker Compose configuration for Papers Social Media Platform
 
 services:
-  papers-app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
+  # PostgreSQL Database
+  database:
+    image: postgres:15-alpine
+    container_name: database
     environment:
-      - NODE_ENV=production
-      - NEXT_TELEMETRY_DISABLED=1
-    # Uncomment the following lines if you need to mount volumes for development
-    # volumes:
-    #   - .:/app
-    #   - /app/node_modules
-    #   - /app/.next
+      POSTGRES_DB: papers_social_media
+      POSTGRES_USER: papers_user
+      POSTGRES_PASSWORD: papers_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database_setup.sql:/docker-entrypoint-initdb.d/01-database-setup.sql
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      test: ["CMD-SHELL", "pg_isready -U papers_user -d papers_social_media"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # Optional: Add a reverse proxy (nginx) for production
+  # Backend Service
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: backend
+    expose:
+      - "3005"
+    environment:
+      NODE_ENV: production
+      PORT: 3005
+      DB_HOST: database
+      DB_PORT: 5432
+      DB_NAME: papers_social_media
+      DB_USER: papers_user
+      DB_PASSWORD: papers_password
+      JWT_SECRET: your_super_secure_jwt_secret_key_here_change_in_production
+      JWT_EXPIRES_IN: 24h
+      UPLOAD_DIR: uploads
+      MAX_FILE_SIZE: 10485760
+    volumes:
+      - backend_uploads:/app/uploads
+    depends_on:
+      database:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Frontend Service
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: frontend
+    expose:
+      - "3000"
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: 1
+      NEXT_PUBLIC_API_URL: /api
+      NEXT_PUBLIC_SERVER_URL: ""
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy
   nginx:
     image: nginx:alpine
+    container_name: nginx
     ports:
-      - "80:80"
-      - "443:443"
+      - "3000:3000"
+    depends_on:
+      - frontend
+      - backend
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      # Uncomment the following lines if you have SSL certificates
-      # - ./ssl:/etc/nginx/ssl:ro
-    depends_on:
-      - papers-app
     restart: unless-stopped
-    profiles:
-      - production
 
-  # Optional: Add a database if needed in the future
-  # postgres:
-  #   image: postgres:15-alpine
-  #   environment:
-  #     POSTGRES_DB: papers_db
-  #     POSTGRES_USER: papers_user
-  #     POSTGRES_PASSWORD: papers_password
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #   ports:
-  #     - "5432:5432"
-  #   restart: unless-stopped
-  #   profiles:
-  #     - production
-# volumes:
-#   postgres_data:
+volumes:
+  postgres_data:
+    driver: local
+  backend_uploads:
+    driver: local
+
+networks:
+  default:
+    name: papers-network
