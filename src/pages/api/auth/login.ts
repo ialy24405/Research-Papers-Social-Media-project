@@ -21,7 +21,7 @@ export default async function handler(
 
 		// Find user
 		const result = await query(
-			"SELECT id, email, password_hash as password, full_name, role FROM users WHERE email = $1",
+			"SELECT id, email, username, password, full_name, role FROM users WHERE email = $1",
 			[email]
 		);
 
@@ -50,6 +50,7 @@ export default async function handler(
 			user: {
 				id: user.id,
 				email: user.email,
+				username: user.username,
 				fullName: user.full_name,
 				role: user.role,
 			},
