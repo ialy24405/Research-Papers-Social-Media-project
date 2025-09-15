@@ -133,7 +133,8 @@ export default async function handler(
 			) reaction_counts ON p.id = reaction_counts.paper_id
 			LEFT JOIN (
 				SELECT paper_id, COUNT(*) as comment_count
-				FROM paper_comments
+				FROM paper_interactions
+				WHERE interaction_type = 'comment'
 				GROUP BY paper_id
 			) comment_counts ON p.id = comment_counts.paper_id
 			LEFT JOIN (
@@ -151,18 +152,24 @@ export default async function handler(
 
 		const papersResult = await query(papersQuery, queryParams);
 
+		console.log(
+			"Admin papers query result:",
+			papersResult.rows.length,
+			"papers found"
+		);
+
 		// Transform the data to match backend format
 		const papers = papersResult.rows.map((row) => ({
 			id: row.id,
 			title: row.title,
 			name: row.title, // Backend uses 'name' for title
-			description: row.abstract, // Backend uses 'description' for abstract
+			description: row.description, // Use correct field name from database
 			authorId: row.author_id,
 			authorName: row.author_name,
 			authorAvatar: row.author_avatar,
 			categoryId: row.category_id,
 			categoryName: row.category_name,
-			pdfUrl: row.file_url, // Backend uses 'pdfUrl'
+			pdfUrl: row.pdf_url, // Use correct field name from database
 			status: row.status,
 			createdAt: row.created_at,
 			rejectionReason: row.rejection_reason,
@@ -175,10 +182,13 @@ export default async function handler(
 		}));
 
 		// For backward compatibility with existing frontend, return just the papers array
+		console.log("Admin papers response:", papers.length, "papers");
 		res.status(200).json(papers);
 	} catch (error) {
 		console.error("Admin papers fetch error:", error);
-		// Return empty array to prevent frontend crashes
+		console.error("Error details:", error);
+		// Return empty array to prevent frontend crashes - but add debugging info
+		console.log("Returning empty array due to error");
 		res.status(200).json([]);
 	}
 }

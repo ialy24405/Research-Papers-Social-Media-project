@@ -47,19 +47,18 @@ export default async function handler(
 			});
 		}
 
-		// Insert paper into database
+		// Insert paper into database - using correct column names from schema
 		const result = await query(
 			`
-			INSERT INTO papers (title, abstract, content, file_url, category_id, author_id, status, created_at, updated_at)
-			VALUES ($1, $2, $3, $4, $5, $6, 'pending', NOW(), NOW())
-			RETURNING id, title, abstract, content, file_url, category_id, author_id, status, created_at, updated_at
+			INSERT INTO papers (title, description, pdf_url, category_id, author_id, status, created_at, updated_at)
+			VALUES ($1, $2, $3, $4, $5, 'pending', NOW(), NOW())
+			RETURNING id, title, description, pdf_url, category_id, author_id, status, created_at, updated_at
 		`,
 			[
 				title,
-				abstract,
-				content,
-				fileUrl || null,
-				parseInt(categoryId),
+				abstract, // Store as description in database
+				fileUrl || null, // Store as pdf_url in database
+				categoryId,
 				req.userId,
 			]
 		);
@@ -71,9 +70,10 @@ export default async function handler(
 			paper: {
 				id: paper.id,
 				title: paper.title,
-				abstract: paper.abstract,
-				content: paper.content,
-				fileUrl: paper.file_url,
+				abstract: paper.description, // Map from description column
+				description: paper.description,
+				fileUrl: paper.pdf_url, // Map from pdf_url column
+				pdfUrl: paper.pdf_url,
 				categoryId: paper.category_id,
 				authorId: paper.author_id,
 				status: paper.status,

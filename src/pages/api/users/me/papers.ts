@@ -61,9 +61,11 @@ export default async function handler(
 		const papers = result.rows.map((row) => ({
 			id: row.id,
 			title: row.title,
-			abstract: row.abstract,
-			content: row.content,
-			fileUrl: row.file_url,
+			abstract: row.description, // Map from correct database field
+			description: row.description,
+			content: row.ai_summary, // Map ai_summary to content if that's what's expected
+			fileUrl: row.pdf_url, // Map from correct database field
+			pdfUrl: row.pdf_url,
 			categoryId: row.category_id,
 			categoryName: row.category_name,
 			status: row.status,
