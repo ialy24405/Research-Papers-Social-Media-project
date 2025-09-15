@@ -51,7 +51,7 @@ export default function PostStatusPage() {
 	const pendingPapers = userPapers.filter((p) => p.status === "pending");
 	const rejectedPapers = userPapers.filter((p) => p.status === "rejected");
 
-	console.log("User papers:", userPapers);
+	console.log("User papers:", userPapers);  
 
 	if (authLoading || papersLoading) {
 		return (

@@ -17,6 +17,11 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { getBackendUrl } from "@/lib/config";
+import { createDownloadHandler } from "@/lib/download-utils";
+import { createShareHandler } from "@/lib/share-utils";
+import { usePaperReaction } from "@/hooks/use-paper-reaction";
+import { ReactionPicker } from "@/components/reaction-picker";
+import { SaveButton } from "@/components/save-button";
 import {
 	Carousel,
 	CarouselContent,
@@ -27,6 +32,7 @@ import {
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import Link from "next/link";
 import { Textarea } from "@/components/ui/textarea";
+import { Comments } from "@/components/comments";
 import type { Paper } from "@/lib/types";
 
 export default function PaperPage({
@@ -36,8 +42,26 @@ export default function PaperPage({
 }) {
 	const [id, setId] = useState<string>("");
 	const [paper, setPaper] = useState<Paper | null>(null);
+	const [commentCount, setCommentCount] = useState<number>(0);
+	const [saveCount, setSaveCount] = useState<number>(0);
 	const { papers, isLoading } = usePapers();
 	const router = useRouter();
+
+	// Handle save count changes
+	const handleSaveChange = (isSaved: boolean) => {
+		setSaveCount((prev) => (isSaved ? prev + 1 : prev - 1));
+	};
+
+	// Reaction hook - only initialize when we have a paper
+	const {
+		stats,
+		currentReaction,
+		toggleReaction,
+		isLoading: reactionLoading,
+		// Backward compatibility
+		count: reactionCount,
+		isReacted,
+	} = usePaperReaction(paper?.id || 0, paper?.reactionCount || 0);
 
 	useEffect(() => {
 		params.then(({ id: paramId }) => {
@@ -49,6 +73,21 @@ export default function PaperPage({
 		if (id && papers.length > 0) {
 			const foundPaper = papers.find((p) => p.id === parseInt(id));
 			setPaper(foundPaper || null);
+			if (foundPaper) {
+				const commentsValue = foundPaper.interactions?.comments;
+				const savesValue = foundPaper.interactions?.saves;
+
+				setCommentCount(
+					typeof commentsValue === "string"
+						? parseInt(commentsValue) || 0
+						: commentsValue || foundPaper.commentCount || 0
+				);
+				setSaveCount(
+					typeof savesValue === "string"
+						? parseInt(savesValue) || 0
+						: savesValue || foundPaper.saveCount || 0
+				);
+			}
 		}
 	}, [id, papers]);
 
@@ -163,52 +202,11 @@ export default function PaperPage({
 										? paper.pdfUrl
 										: getBackendUrl(paper.pdfUrl);
 
-									// Function to handle PDF download
-									const handleDownload = async () => {
-										try {
-											console.log("Starting download for:", pdfUrl);
-											const response = await fetch(pdfUrl, {
-												mode: "cors",
-												credentials: "same-origin",
-											});
-
-											if (!response.ok) {
-												throw new Error(
-													`HTTP error! status: ${response.status}`
-												);
-											}
-
-											const contentType = response.headers.get("content-type");
-											console.log("Content type:", contentType);
-
-											const blob = await response.blob();
-											console.log("Blob size:", blob.size);
-
-											const url = window.URL.createObjectURL(blob);
-											const a = document.createElement("a");
-											a.href = url;
-											a.download = `${paper.name.replace(
-												/[^a-z0-9]/gi,
-												"_"
-											)}.pdf`;
-											a.style.display = "none";
-											document.body.appendChild(a);
-											a.click();
-
-											// Clean up
-											setTimeout(() => {
-												window.URL.revokeObjectURL(url);
-												document.body.removeChild(a);
-											}, 100);
-
-											console.log("Download initiated successfully");
-										} catch (error) {
-											console.error("Download failed:", error);
-											alert("Download failed. Opening PDF in new tab instead.");
-											// Fallback: open in new tab
-											window.open(pdfUrl, "_blank");
-										}
-									};
+									// Create download handler using the centralized utility
+									const handleDownload = createDownloadHandler(
+										paper.pdfUrl,
+										paper.name
+									);
 
 									return (
 										<div className="space-y-4">
@@ -326,28 +324,7 @@ export default function PaperPage({
 								<Button
 									variant="outline"
 									size="sm"
-									onClick={() => {
-										const pdfUrl = paper.pdfUrl.startsWith("http")
-											? paper.pdfUrl
-											: getBackendUrl(paper.pdfUrl);
-
-										fetch(pdfUrl, { mode: "cors" })
-											.then((response) => response.blob())
-											.then((blob) => {
-												const url = window.URL.createObjectURL(blob);
-												const a = document.createElement("a");
-												a.href = url;
-												a.download = `${paper.name.replace(
-													/[^a-z0-9]/gi,
-													"_"
-												)}.pdf`;
-												document.body.appendChild(a);
-												a.click();
-												window.URL.revokeObjectURL(url);
-												document.body.removeChild(a);
-											})
-											.catch(() => window.open(pdfUrl, "_blank"));
-									}}
+									onClick={createDownloadHandler(paper.pdfUrl, paper.name)}
 								>
 									<Download className="mr-2 h-4 w-4" />
 									Download PDF
@@ -363,55 +340,51 @@ export default function PaperPage({
 						<div className="flex items-center justify-between">
 							<div className="flex items-center gap-6 text-sm text-muted-foreground">
 								<span className="flex items-center gap-1.5">
-									<Heart className="h-5 w-5" /> {paper.reactionCount} Reactions
+									<Heart className="h-5 w-5" /> {reactionCount} Reactions
 								</span>
 								<span className="flex items-center gap-1.5">
-									<MessageCircle className="h-5 w-5" /> {paper.commentCount}{" "}
-									Comments
+									<MessageCircle className="h-5 w-5" /> {commentCount} Comments
 								</span>
 								<span className="flex items-center gap-1.5">
-									<Bookmark className="h-5 w-5" /> {paper.saveCount} Saves
+									<Bookmark className="h-5 w-5" /> {saveCount} Saves
 								</span>
 							</div>
-							<Button variant="outline">
+							<Button variant="outline" onClick={createShareHandler(paper)}>
 								<Share2 className="mr-2 h-4 w-4" /> Share
 							</Button>
 						</div>
 						<div className="mt-6 flex items-center gap-2">
-							<Button variant="outline" size="lg" className="flex-1">
-								<Heart className="mr-2 h-4 w-4" /> React
-							</Button>
-							<Button variant="outline" size="lg" className="flex-1">
+							<ReactionPicker
+								onReactionSelect={toggleReaction}
+								currentReaction={currentReaction}
+								isLoading={reactionLoading}
+								size="lg"
+							/>
+							<Button
+								variant="outline"
+								size="lg"
+								className="flex-1"
+								onClick={() => {
+									const commentsSection =
+										document.getElementById("comments-section");
+									commentsSection?.scrollIntoView({ behavior: "smooth" });
+								}}
+							>
 								<MessageCircle className="mr-2 h-4 w-4" /> Comment
 							</Button>
-							<Button variant="outline" size="icon" className="h-11 w-11">
-								<Bookmark className="h-5 w-5" />
-							</Button>
+							<SaveButton
+								paperId={paper.id}
+								variant="outline"
+								size="icon"
+								className="h-11 w-11"
+								onSaveChange={handleSaveChange}
+							/>
 							<Button
 								size="icon"
 								className="h-11 w-11"
 								onClick={() => {
 									if (paper.pdfUrl) {
-										const pdfUrl = paper.pdfUrl.startsWith("http")
-											? paper.pdfUrl
-											: getBackendUrl(paper.pdfUrl);
-
-										fetch(pdfUrl, { mode: "cors" })
-											.then((response) => response.blob())
-											.then((blob) => {
-												const url = window.URL.createObjectURL(blob);
-												const a = document.createElement("a");
-												a.href = url;
-												a.download = `${paper.name.replace(
-													/[^a-z0-9]/gi,
-													"_"
-												)}.pdf`;
-												document.body.appendChild(a);
-												a.click();
-												window.URL.revokeObjectURL(url);
-												document.body.removeChild(a);
-											})
-											.catch(() => window.open(pdfUrl, "_blank"));
+										createDownloadHandler(paper.pdfUrl, paper.name)();
 									}
 								}}
 							>
@@ -423,26 +396,12 @@ export default function PaperPage({
 					<Separator />
 
 					{/* Comments Section */}
-					<section>
-						<h2 className="text-2xl font-bold font-headline mb-4">
-							Comments ({paper.commentCount})
-						</h2>
-						<div className="flex items-start gap-4">
-							<Avatar>
-								<AvatarImage src={dummyUser.avatarUrl || undefined} />
-								<AvatarFallback>{dummyUser.fullName.charAt(0)}</AvatarFallback>
-							</Avatar>
-							<div className="w-full">
-								<Textarea
-									placeholder="Add a public comment..."
-									className="mb-2"
-								/>
-								<div className="flex justify-end">
-									<Button>Comment</Button>
-								</div>
-							</div>
-						</div>
-						{/* Placeholder for comments list */}
+					<section id="comments-section">
+						<Comments
+							paperId={paper.id}
+							initialCommentCount={paper.commentCount}
+							onCommentCountChange={setCommentCount}
+						/>
 					</section>
 				</main>
 

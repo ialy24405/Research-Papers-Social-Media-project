@@ -37,10 +37,13 @@ export interface PaperWithDetails extends Paper {
 
 export interface PaperComment {
 	id: number;
+	user_id: number;
 	user_name: string;
 	user_avatar: string;
 	comment_text: string;
 	created_at: Date;
+	parent_comment_id?: number;
+	replies?: PaperComment[];
 }
 
 export class PaperModel {
@@ -78,8 +81,7 @@ export class PaperModel {
       LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN (
         SELECT paper_id, COUNT(*) as count 
-        FROM paper_interactions 
-        WHERE interaction_type = 'reaction' 
+        FROM paper_reactions 
         GROUP BY paper_id
       ) reactions ON p.id = reactions.paper_id
       LEFT JOIN (
@@ -163,8 +165,7 @@ export class PaperModel {
       LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN (
         SELECT paper_id, COUNT(*) as count 
-        FROM paper_interactions 
-        WHERE interaction_type = 'reaction' 
+        FROM paper_reactions 
         GROUP BY paper_id
       ) reactions ON p.id = reactions.paper_id
       LEFT JOIN (
@@ -190,18 +191,76 @@ export class PaperModel {
 		const query = `
       SELECT 
         pi.id,
+        pi.user_id,
         u.full_name as user_name,
         u.avatar_url as user_avatar,
         pi.comment_text,
-        pi.created_at
+        pi.created_at,
+        pi.parent_comment_id
       FROM paper_interactions pi
       LEFT JOIN users u ON pi.user_id = u.id
       WHERE pi.paper_id = $1 AND pi.interaction_type = 'comment'
-      ORDER BY pi.created_at DESC
+      ORDER BY pi.created_at ASC
     `;
 
 		const result = await db.query(query, [paperId]);
-		return result.rows;
+		const comments = result.rows;
+
+		// Build hierarchical structure
+		const commentMap = new Map<number, PaperComment>();
+		const rootComments: PaperComment[] = [];
+
+		// First pass: create all comment objects
+		comments.forEach((comment: any) => {
+			comment.replies = [];
+			commentMap.set(comment.id, comment);
+		});
+
+		// Second pass: build hierarchy
+		comments.forEach((comment: any) => {
+			if (comment.parent_comment_id) {
+				const parent = commentMap.get(comment.parent_comment_id);
+				if (parent) {
+					parent.replies?.push(comment);
+				}
+			} else {
+				rootComments.push(comment);
+			}
+		});
+
+		return rootComments;
+	}
+
+	static async addComment(
+		paperId: number,
+		userId: number,
+		commentText: string,
+		parentCommentId?: number
+	): Promise<void> {
+		const query = `
+      INSERT INTO paper_interactions (paper_id, user_id, interaction_type, comment_text, parent_comment_id)
+      VALUES ($1, $2, 'comment', $3, $4)
+    `;
+
+		await db.query(query, [
+			paperId,
+			userId,
+			commentText,
+			parentCommentId || null,
+		]);
+	}
+
+	static async validateParentComment(
+		paperId: number,
+		parentCommentId: number
+	): Promise<boolean> {
+		const query = `
+      SELECT 1 FROM paper_interactions 
+      WHERE id = $1 AND paper_id = $2 AND interaction_type = 'comment'
+    `;
+
+		const result = await db.query(query, [parentCommentId, paperId]);
+		return result.rows.length > 0;
 	}
 
 	static async updateStatus(
@@ -228,8 +287,7 @@ export class PaperModel {
       FROM papers p
       LEFT JOIN (
         SELECT paper_id, COUNT(*) as count 
-        FROM paper_interactions 
-        WHERE interaction_type = 'reaction' 
+        FROM paper_reactions 
         GROUP BY paper_id
       ) reactions ON p.id = reactions.paper_id
       LEFT JOIN (
@@ -268,8 +326,7 @@ export class PaperModel {
       LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN (
         SELECT paper_id, COUNT(*) as count 
-        FROM paper_interactions 
-        WHERE interaction_type = 'reaction' 
+        FROM paper_reactions 
         GROUP BY paper_id
       ) reactions ON p.id = reactions.paper_id
       LEFT JOIN (
@@ -290,5 +347,36 @@ export class PaperModel {
 
 		const result = await db.query(query, [userId]);
 		return result.rows;
+	}
+
+	static async checkUserSave(
+		paperId: number,
+		userId: number
+	): Promise<boolean> {
+		const query = `
+      SELECT 1 FROM paper_interactions 
+      WHERE paper_id = $1 AND user_id = $2 AND interaction_type = 'save'
+    `;
+
+		const result = await db.query(query, [paperId, userId]);
+		return result.rows.length > 0;
+	}
+
+	static async savePaper(paperId: number, userId: number): Promise<void> {
+		const query = `
+      INSERT INTO paper_interactions (paper_id, user_id, interaction_type)
+      VALUES ($1, $2, 'save')
+    `;
+
+		await db.query(query, [paperId, userId]);
+	}
+
+	static async unsavePaper(paperId: number, userId: number): Promise<void> {
+		const query = `
+      DELETE FROM paper_interactions 
+      WHERE paper_id = $1 AND user_id = $2 AND interaction_type = 'save'
+    `;
+
+		await db.query(query, [paperId, userId]);
 	}
 }

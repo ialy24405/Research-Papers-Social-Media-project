@@ -12,6 +12,7 @@ import paperRoutes from "./api/routes/paper.routes";
 import categoryRoutes from "./api/routes/category.routes";
 import userRoutes from "./api/routes/user.routes";
 import adminRoutes from "./api/routes/admin.routes";
+import reactionRoutes from "./api/routes/reaction.routes";
 
 const app = express();
 
@@ -102,6 +103,7 @@ app.use("/api/papers", paperRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/reactions", reactionRoutes);
 
 // 404 handler
 app.use("*", (req, res) => {

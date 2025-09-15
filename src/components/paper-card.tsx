@@ -25,6 +25,11 @@ import {
 import type { Paper } from "@/lib/types";
 import { getPlaceholderImage } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
+import { createDownloadHandler } from "@/lib/download-utils";
+import { createShareHandler } from "@/lib/share-utils";
+import { usePaperReaction } from "@/hooks/use-paper-reaction";
+import { SaveButton } from "@/components/save-button";
+import { ReactionPicker } from "@/components/reaction-picker";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -38,6 +43,13 @@ interface PaperCardProps {
 
 export function PaperCard({ paper }: PaperCardProps) {
 	const [timeAgo, setTimeAgo] = useState("");
+	const {
+		count: reactionCount,
+		currentReaction,
+		stats,
+		toggleReaction,
+		isLoading,
+	} = usePaperReaction(paper.id, paper.interactions.reactions);
 
 	useEffect(() => {
 		setTimeAgo(
@@ -70,15 +82,21 @@ export function PaperCard({ paper }: PaperCardProps) {
 							</Button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end">
-							<DropdownMenuItem>View Details</DropdownMenuItem>
-							<DropdownMenuItem>Share</DropdownMenuItem>
-							<DropdownMenuItem>Save</DropdownMenuItem>
+							{/* <DropdownMenuItem>View Details</DropdownMenuItem> */}
+							<DropdownMenuItem onClick={createShareHandler(paper)}>
+								<Share2 className="mr-2 h-4 w-4" />
+								Share
+							</DropdownMenuItem>
+							{/* <DropdownMenuItem>Save</DropdownMenuItem> */}
 						</DropdownMenuContent>
 					</DropdownMenu>
 				</div>
 				<div className="flex items-center gap-2 text-sm text-muted-foreground">
 					<Avatar className="h-6 w-6">
-						<AvatarImage src={paper.authorAvatar || undefined} alt={paper.authorName} />
+						<AvatarImage
+							src={paper.authorAvatar || undefined}
+							alt={paper.authorName}
+						/>
 						<AvatarFallback>{paper.authorName.charAt(0)}</AvatarFallback>
 					</Avatar>
 					<span>{paper.authorName}</span>
@@ -92,7 +110,7 @@ export function PaperCard({ paper }: PaperCardProps) {
 			<CardFooter className="flex-col items-start gap-4">
 				<div className="flex items-center flex-wrap gap-4 text-sm text-muted-foreground">
 					<div className="flex items-center gap-1">
-						<Heart className="h-4 w-4" /> {paper.interactions.reactions}
+						<Heart className="h-4 w-4" /> {reactionCount}
 					</div>
 					<div className="flex items-center gap-1">
 						<MessageCircle className="h-4 w-4" /> {paper.interactions.comments}
@@ -102,17 +120,32 @@ export function PaperCard({ paper }: PaperCardProps) {
 					</div>
 				</div>
 				<div className="flex w-full items-center gap-2">
-					<Button variant="outline" size="sm" className="flex-1 min-w-0">
-						<Heart className="mr-2 h-4 w-4" /> React
-					</Button>
+					<ReactionPicker
+						onReactionSelect={toggleReaction}
+						currentReaction={currentReaction}
+						isLoading={isLoading}
+						size="sm"
+					/>
 					<Button variant="outline" size="sm" className="flex-1 min-w-0">
 						<MessageCircle className="mr-2 h-4 w-4" /> Comment
 					</Button>
-					<Button variant="outline" size="icon" className="shrink-0">
-						<Bookmark className="h-4 w-4" />
-						<span className="sr-only">Save</span>
-					</Button>
-					<Button variant="outline" size="icon" className="shrink-0">
+					<SaveButton
+						paperId={paper.id}
+						variant="outline"
+						size="icon"
+						className="shrink-0"
+					/>
+					<Button
+						variant="outline"
+						size="icon"
+						className="shrink-0"
+						onClick={
+							paper.pdfUrl
+								? createDownloadHandler(paper.pdfUrl, paper.name)
+								: undefined
+						}
+						disabled={!paper.pdfUrl}
+					>
 						<Download className="h-4 w-4" />
 						<span className="sr-only">Download</span>
 					</Button>

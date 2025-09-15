@@ -114,9 +114,18 @@ export const paperService = {
 	},
 
 	/**
-	 * Save/unsave a paper
+	 * Save a paper
 	 */
 	async savePaper(id: string): Promise<{ message: string }> {
 		return httpClient.post<{ message: string }>(API_ENDPOINTS.PAPERS.SAVE(id));
+	},
+
+	/**
+	 * Unsave a paper
+	 */
+	async unsavePaper(id: string): Promise<{ message: string }> {
+		return httpClient.delete<{ message: string }>(
+			API_ENDPOINTS.PAPERS.SAVE(id)
+		);
 	},
 };

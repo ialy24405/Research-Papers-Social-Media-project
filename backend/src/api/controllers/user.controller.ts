@@ -71,6 +71,11 @@ export class UserController {
 				description: paper.description,
 				authorName: paper.author_name,
 				authorAvatar: paper.author_avatar,
+				pdfUrl: paper.pdf_url,
+				category: {
+					id: paper.category_id,
+					name: paper.category_name,
+				},
 				createdAt: paper.created_at,
 				interactions: {
 					reactions: paper.reaction_count,

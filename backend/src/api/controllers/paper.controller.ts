@@ -48,28 +48,28 @@ export class PaperController {
 				return res.status(400).json({ error: error.details[0].message });
 			}
 
-            console.log("Query parameters:", value);
+			console.log("Query parameters:", value);
 
 			const papers = await PaperModel.findAll(value);
-            
-            console.log("Fetched papers:", papers);
+
+			console.log("Fetched papers:", papers);
 
 			// Transform data for response
 			const response = papers.map((paper) => ({
 				id: paper.id,
 				name: paper.title,
 				description: paper.description,
-                authorId: paper.author_id,
+				authorId: paper.author_id,
 				authorName: paper.author_name,
 				authorAvatar: paper.author_avatar,
-                category: {
+				category: {
 					id: paper.category_id,
 					name: paper.category_name,
 				},
-                pdf_url: paper.pdf_url,
-                status: paper.status,
-                rejection_reason: paper.rejection_reason,
-                approved_by: paper.approved_by_id,
+				pdf_url: paper.pdf_url,
+				status: paper.status,
+				rejection_reason: paper.rejection_reason,
+				approved_by: paper.approved_by_id,
 				createdAt: paper.created_at,
 				interactions: {
 					reactions: paper.reaction_count,
@@ -203,6 +203,178 @@ export class PaperController {
 			res.status(200).json(response);
 		} catch (error) {
 			console.error("Get paper by ID error:", error);
+			res.status(500).json({ error: "Internal server error" });
+		}
+	}
+
+	static async savePaper(req: AuthRequest, res: Response) {
+		try {
+			if (!req.user) {
+				return res.status(401).json({ error: "Authentication required" });
+			}
+
+			const paperId = parseInt(req.params.id);
+			if (isNaN(paperId)) {
+				return res.status(400).json({ error: "Invalid paper ID" });
+			}
+
+			// Check if paper exists
+			const paper = await PaperModel.findById(paperId);
+			if (!paper) {
+				return res.status(404).json({ error: "Paper not found" });
+			}
+
+			// Check if already saved
+			const existingSave = await PaperModel.checkUserSave(paperId, req.user.id);
+			if (existingSave) {
+				return res.status(400).json({ error: "Paper already saved" });
+			}
+
+			// Save the paper
+			await PaperModel.savePaper(paperId, req.user.id);
+
+			res.status(200).json({ message: "Paper saved successfully" });
+		} catch (error) {
+			console.error("Save paper error:", error);
+			res.status(500).json({ error: "Internal server error" });
+		}
+	}
+
+	static async unsavePaper(req: AuthRequest, res: Response) {
+		try {
+			if (!req.user) {
+				return res.status(401).json({ error: "Authentication required" });
+			}
+
+			const paperId = parseInt(req.params.id);
+			if (isNaN(paperId)) {
+				return res.status(400).json({ error: "Invalid paper ID" });
+			}
+
+			// Check if paper exists
+			const paper = await PaperModel.findById(paperId);
+			if (!paper) {
+				return res.status(404).json({ error: "Paper not found" });
+			}
+
+			// Check if actually saved
+			const existingSave = await PaperModel.checkUserSave(paperId, req.user.id);
+			if (!existingSave) {
+				return res.status(400).json({ error: "Paper not saved" });
+			}
+
+			// Unsave the paper
+			await PaperModel.unsavePaper(paperId, req.user.id);
+
+			res.status(200).json({ message: "Paper unsaved successfully" });
+		} catch (error) {
+			console.error("Unsave paper error:", error);
+			res.status(500).json({ error: "Internal server error" });
+		}
+	}
+
+	static async addComment(req: AuthRequest, res: Response) {
+		try {
+			if (!req.user) {
+				return res.status(401).json({ error: "Authentication required" });
+			}
+
+			const paperId = parseInt(req.params.id);
+			if (isNaN(paperId)) {
+				return res.status(400).json({ error: "Invalid paper ID" });
+			}
+
+			const { comment, parentCommentId } = req.body;
+			if (
+				!comment ||
+				typeof comment !== "string" ||
+				comment.trim().length === 0
+			) {
+				return res.status(400).json({ error: "Comment text is required" });
+			}
+
+			if (comment.trim().length > 1000) {
+				return res
+					.status(400)
+					.json({ error: "Comment too long (max 1000 characters)" });
+			}
+
+			// Check if paper exists
+			const paper = await PaperModel.findById(paperId);
+			if (!paper) {
+				return res.status(404).json({ error: "Paper not found" });
+			}
+
+			// If replying to a comment, validate parent comment exists
+			if (parentCommentId) {
+				const parentCommentIdNum = parseInt(parentCommentId);
+				if (isNaN(parentCommentIdNum)) {
+					return res.status(400).json({ error: "Invalid parent comment ID" });
+				}
+
+				// Check if parent comment exists and belongs to this paper
+				const parentExists = await PaperModel.validateParentComment(
+					paperId,
+					parentCommentIdNum
+				);
+				if (!parentExists) {
+					return res.status(400).json({ error: "Parent comment not found" });
+				}
+
+				// Add the reply
+				await PaperModel.addComment(
+					paperId,
+					req.user.id,
+					comment.trim(),
+					parentCommentIdNum
+				);
+			} else {
+				// Add the comment (top-level)
+				await PaperModel.addComment(paperId, req.user.id, comment.trim());
+			}
+
+			res.status(201).json({ message: "Comment added successfully" });
+		} catch (error) {
+			console.error("Add comment error:", error);
+			res.status(500).json({ error: "Internal server error" });
+		}
+	}
+
+	static async getComments(req: Request, res: Response) {
+		try {
+			const paperId = parseInt(req.params.id);
+			if (isNaN(paperId)) {
+				return res.status(400).json({ error: "Invalid paper ID" });
+			}
+
+			// Check if paper exists
+			const paper = await PaperModel.findById(paperId);
+			if (!paper) {
+				return res.status(404).json({ error: "Paper not found" });
+			}
+
+			// Get comments for the paper
+			const comments = await PaperModel.getComments(paperId);
+
+			// Recursive function to transform hierarchical comments
+			const transformComment = (comment: any): any => ({
+				id: comment.id,
+				user: {
+					id: comment.user_id,
+					name: comment.user_name,
+					avatarUrl: comment.user_avatar,
+				},
+				text: comment.comment_text,
+				createdAt: comment.created_at,
+				parent_comment_id: comment.parent_comment_id,
+				replies: comment.replies ? comment.replies.map(transformComment) : [],
+			});
+
+			const response = comments.map(transformComment);
+
+			res.status(200).json(response);
+		} catch (error) {
+			console.error("Get comments error:", error);
 			res.status(500).json({ error: "Internal server error" });
 		}
 	}
