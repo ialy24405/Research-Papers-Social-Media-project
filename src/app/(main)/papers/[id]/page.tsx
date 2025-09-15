@@ -49,7 +49,7 @@ export default function PaperPage({
 
 	// Handle save count changes
 	const handleSaveChange = (isSaved: boolean) => {
-		setSaveCount((prev) => (isSaved ? prev + 1 : prev - 1));
+		setSaveCount(prev => isSaved ? prev + 1 : prev - 1);
 	};
 
 	// Reaction hook - only initialize when we have a paper
@@ -74,19 +74,8 @@ export default function PaperPage({
 			const foundPaper = papers.find((p) => p.id === parseInt(id));
 			setPaper(foundPaper || null);
 			if (foundPaper) {
-				const commentsValue = foundPaper.interactions?.comments;
-				const savesValue = foundPaper.interactions?.saves;
-
-				setCommentCount(
-					typeof commentsValue === "string"
-						? parseInt(commentsValue) || 0
-						: commentsValue || foundPaper.commentCount || 0
-				);
-				setSaveCount(
-					typeof savesValue === "string"
-						? parseInt(savesValue) || 0
-						: savesValue || foundPaper.saveCount || 0
-				);
+				setCommentCount(foundPaper.commentCount || 0);
+				setSaveCount(foundPaper.saveCount || 0);
 			}
 		}
 	}, [id, papers]);
@@ -343,7 +332,8 @@ export default function PaperPage({
 									<Heart className="h-5 w-5" /> {reactionCount} Reactions
 								</span>
 								<span className="flex items-center gap-1.5">
-									<MessageCircle className="h-5 w-5" /> {commentCount} Comments
+									<MessageCircle className="h-5 w-5" /> {commentCount}{" "}
+									Comments
 								</span>
 								<span className="flex items-center gap-1.5">
 									<Bookmark className="h-5 w-5" /> {saveCount} Saves

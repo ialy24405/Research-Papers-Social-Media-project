@@ -13,12 +13,12 @@ const { db } = require("./dist/config/db");
 
 async function runMigration() {
 	try {
-		console.log("Running parent_comment_id migration...");
+		console.log("Running owner role migration...");
 
 		const migrationPath = path.join(
 			__dirname,
-			"migrations",
-			"add_parent_comment_id.sql"
+			"src/config/migrations",
+			"002_add_owner_role.sql"
 		);
 		const migrationSQL = fs.readFileSync(migrationPath, "utf8");
 
@@ -36,13 +36,17 @@ async function runMigration() {
 		}
 
 		console.log("Migration completed successfully!");
-		console.log("paper_reactions table is now available for use.");
+		console.log("Owner role is now available for users.");
 	} catch (error) {
 		console.error("Migration failed:", error.message);
 
-		// If the table already exists, that's fine
-		if (error.message.includes("already exists")) {
-			console.log("Table already exists - skipping migration.");
+		// If the constraint already exists or doesn't exist, handle it
+		if (error.message.includes("does not exist")) {
+			console.log("Constraint may already be updated - that's fine.");
+		} else if (error.message.includes("already exists")) {
+			console.log("Constraint already exists - skipping migration.");
+		} else {
+			throw error;
 		}
 	} finally {
 		process.exit(0);

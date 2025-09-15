@@ -36,9 +36,18 @@ export const paperStatusSchema = Joi.object({
 export const categorySchema = Joi.object({
 	id: Joi.string().alphanum().min(2).max(100).required(),
 	name: Joi.string().min(2).max(255).required(),
-	description: Joi.string().optional(),
-	imageUrl: Joi.string().uri().optional(),
-	imageHint: Joi.string().max(255).optional(),
+	description: Joi.string().optional().allow(""),
+	imageUrl: Joi.string().uri().optional().allow("", null),
+	imageHint: Joi.string().max(255).optional().allow(""),
+});
+
+// Category update validation schema (allows editing existing categories)
+export const categoryUpdateSchema = Joi.object({
+	name: Joi.string().min(2).max(255).optional(),
+	description: Joi.string().optional().allow(""),
+	imageUrl: Joi.string().uri().optional().allow("", null),
+	imageHint: Joi.string().max(255).optional().allow(""),
+	newId: Joi.string().alphanum().min(2).max(100).optional(), // Allow changing the category ID
 });
 
 // Query validation schemas

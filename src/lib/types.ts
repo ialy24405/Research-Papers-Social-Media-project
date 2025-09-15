@@ -5,7 +5,7 @@ export interface User {
 	collegeName: string;
 	country: string;
 	birthDate: string;
-	role: "user" | "admin";
+	role: "user" | "admin" | "owner";
 	avatarUrl: string | null;
 	ssn: string;
 	createdAt: string;
@@ -14,13 +14,13 @@ export interface User {
 export interface Paper {
 	id: number;
 	title: string;
-  name : string;
+	name: string;
 	description: string;
 	authorId: number;
 	authorName: string;
 	authorAvatar: string | null;
 	pdfUrl: string;
-  category : Category;
+	category: Category;
 	categoryId: string;
 	categoryName: string;
 	categoryDescription?: string;
@@ -32,12 +32,12 @@ export interface Paper {
 	reactionCount: number;
 	commentCount: number;
 	saveCount: number;
-  interactions : interactions;
+	interactions: interactions;
 }
 export interface interactions {
-  comments : number;
-  reactions : number;
-  saves : number;
+	comments: number;
+	reactions: number;
+	saves: number;
 }
 export interface Category {
 	id: string;

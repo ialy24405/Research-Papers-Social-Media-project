@@ -91,7 +91,11 @@ export default function ProfilePage() {
 								{user.fullName}
 							</CardTitle>
 							<CardDescription>
-								{user.role === "admin" ? "Administrator" : "Researcher"}
+								{user.role === "owner"
+									? "Owner"
+									: user.role === "admin"
+									? "Administrator"
+									: "Researcher"}
 							</CardDescription>
 						</CardHeader>
 						<CardContent className="text-sm text-muted-foreground space-y-3">

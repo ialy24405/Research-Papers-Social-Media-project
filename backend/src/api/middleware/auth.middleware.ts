@@ -69,8 +69,8 @@ export function adminMiddleware(
 		return res.status(401).json({ error: "Authentication required." });
 	}
 
-	if (req.user.role !== "admin") {
-		return res.status(403).json({ error: "Admin access required." });
+	if (req.user.role !== "admin" && req.user.role !== "owner") {
+		return res.status(403).json({ error: "Admin or Owner access required." });
 	}
 
 	next();

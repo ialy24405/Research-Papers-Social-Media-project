@@ -47,5 +47,8 @@ export const API_ENDPOINTS = {
 		PAPERS: "/admin/papers",
 		UPDATE_USER_ROLE: (id: string) => `/admin/users/${id}/role`,
 		MODERATE_PAPER: (id: string) => `/admin/papers/${id}/moderate`,
+		UPDATE_PAPER_STATUS: (id: string) => `/admin/papers/${id}/status`,
+		CATEGORIES: "/admin/categories",
+		DELETE_CATEGORY: (id: string) => `/admin/categories/${id}`,
 	},
 } as const;

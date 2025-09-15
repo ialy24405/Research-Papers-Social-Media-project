@@ -176,7 +176,6 @@ export default function HomePage() {
 					<div className="relative flex-1">
 						<Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
 						<Input
-							type="search"
 							placeholder="Search papers by title, author, or keyword..."
 							className="w-full rounded-lg bg-card pl-8 pr-8 md:w-[300px] lg:w-[400px]"
 							value={searchQuery}

@@ -103,11 +103,11 @@ export function MainSidebar() {
 					))}
 				</SidebarMenu>
 
-				{currentUser.role === "admin" && (
+				{(currentUser.role === "admin" || currentUser.role === "owner") && (
 					<SidebarMenu>
 						<Separator className="my-2 bg-sidebar-border" />
 						<p className="px-4 py-2 text-xs text-sidebar-foreground/50 group-data-[collapsible=icon]:hidden">
-							Admin
+							{currentUser.role === "owner" ? "Owner" : "Admin"}
 						</p>
 						{adminMenuItems.map((item) => (
 							<SidebarMenuItem key={item.href}>

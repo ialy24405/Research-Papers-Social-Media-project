@@ -75,4 +75,101 @@ export class UserModel {
 		const result = await db.query(query, [id]);
 		return result.rows[0] || null;
 	}
+
+	// Admin user management methods
+	static async findAll(
+		filters: { role?: string; search?: string } = {}
+	): Promise<Omit<User, "password_hash" | "ssn">[]> {
+		let query = `
+			SELECT id, full_name, email, birth_date, college_name, country, 
+				   avatar_url, role, created_at
+			FROM users 
+			WHERE 1=1
+		`;
+		const values: any[] = [];
+		let paramCount = 1;
+
+		if (filters.role && filters.role !== "all") {
+			query += ` AND role = $${paramCount}`;
+			values.push(filters.role);
+			paramCount++;
+		}
+
+		if (filters.search && filters.search.trim()) {
+			query += ` AND (full_name ILIKE $${paramCount} OR email ILIKE $${paramCount})`;
+			values.push(`%${filters.search.trim()}%`);
+			paramCount++;
+		}
+
+		query += ` ORDER BY created_at DESC`;
+
+		const result = await db.query(query, values);
+		return result.rows;
+	}
+
+	static async updateRole(id: number, role: string): Promise<void> {
+		const query = "UPDATE users SET role = $1 WHERE id = $2";
+		await db.query(query, [role, id]);
+	}
+
+	static async deleteUser(id: number): Promise<void> {
+		const query = "DELETE FROM users WHERE id = $1";
+		await db.query(query, [id]);
+	}
+
+	static async updateUser(
+		id: number,
+		updates: Partial<Omit<User, "id" | "password_hash" | "created_at">>
+	): Promise<void> {
+		const setParts: string[] = [];
+		const values: any[] = [];
+		let paramCount = 1;
+
+		if (updates.full_name !== undefined) {
+			setParts.push(`full_name = $${paramCount}`);
+			values.push(updates.full_name);
+			paramCount++;
+		}
+
+		if (updates.email !== undefined) {
+			setParts.push(`email = $${paramCount}`);
+			values.push(updates.email);
+			paramCount++;
+		}
+
+		if (updates.birth_date !== undefined) {
+			setParts.push(`birth_date = $${paramCount}`);
+			values.push(updates.birth_date);
+			paramCount++;
+		}
+
+		if (updates.college_name !== undefined) {
+			setParts.push(`college_name = $${paramCount}`);
+			values.push(updates.college_name);
+			paramCount++;
+		}
+
+		if (updates.country !== undefined) {
+			setParts.push(`country = $${paramCount}`);
+			values.push(updates.country);
+			paramCount++;
+		}
+
+		if (updates.avatar_url !== undefined) {
+			setParts.push(`avatar_url = $${paramCount}`);
+			values.push(updates.avatar_url);
+			paramCount++;
+		}
+
+		if (setParts.length === 0) {
+			return; // No updates to make
+		}
+
+		const query = `UPDATE users SET ${setParts.join(
+			", "
+		)} WHERE id = $${paramCount}`;
+		values.push(id);
+
+		await db.query(query, values);
+	}
 }

@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
     country VARCHAR(255) NOT NULL,
     ssn VARCHAR(255) NOT NULL,
     avatar_url TEXT,
-    role VARCHAR(50) DEFAULT 'user' CHECK (role IN ('user', 'admin')),
+    role VARCHAR(50) DEFAULT 'user' CHECK (role IN ('user', 'admin', 'owner')),
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

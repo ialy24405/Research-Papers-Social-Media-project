@@ -7,7 +7,13 @@ export interface AdminUser extends User {
 }
 
 export interface AdminPaper extends Paper {
-	// Additional admin-specific fields if needed
+	approvedBy?: number;
+	rejectionReason?: string;
+}
+
+export interface UpdatePaperStatusRequest {
+	status: "approved" | "pending" | "rejected";
+	reason?: string;
 }
 
 export const adminService = {
@@ -21,8 +27,21 @@ export const adminService = {
 	/**
 	 * Get all papers for moderation (admin only)
 	 */
-	async getPapers(): Promise<AdminPaper[]> {
-		return httpClient.get<AdminPaper[]>(API_ENDPOINTS.ADMIN.PAPERS);
+	async getPapers(status?: string, search?: string): Promise<AdminPaper[]> {
+		const params: Record<string, string> = {};
+
+		if (status && status !== "all") {
+			params.status = status;
+		}
+
+		if (search && search.trim()) {
+			params.search = search.trim();
+		}
+
+		return httpClient.get<AdminPaper[]>(
+			API_ENDPOINTS.ADMIN.PAPERS,
+			Object.keys(params).length > 0 ? params : undefined
+		);
 	},
 
 	/**
@@ -49,6 +68,19 @@ export const adminService = {
 		return httpClient.patch<{ message: string }>(
 			API_ENDPOINTS.ADMIN.MODERATE_PAPER(paperId),
 			{ action, reason }
+		);
+	},
+
+	/**
+	 * Update paper status (admin only)
+	 */
+	async updatePaperStatus(
+		paperId: number,
+		data: UpdatePaperStatusRequest
+	): Promise<{ message: string }> {
+		return httpClient.put<{ message: string }>(
+			API_ENDPOINTS.ADMIN.UPDATE_PAPER_STATUS(paperId.toString()),
+			data
 		);
 	},
 };
