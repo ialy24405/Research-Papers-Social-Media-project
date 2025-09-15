@@ -50,8 +50,14 @@ export default async function handler(
 	req: AuthenticatedRequest,
 	res: NextApiResponse
 ) {
+	console.log("=== Next.js Admin Papers API Called ===");
+	console.log("Method:", req.method);
+	console.log("URL:", req.url);
+	console.log("Headers:", req.headers);
+
 	// Authenticate user
 	if (!authenticateToken(req)) {
+		console.log("Authentication failed");
 		return res.status(401).json({ error: "Unauthorized" });
 	}
 
@@ -122,7 +128,7 @@ export default async function handler(
 				COALESCE(comment_counts.comment_count, 0) as comment_count,
 				COALESCE(save_counts.save_count, 0) as save_count,
 				p.rejection_reason,
-				p.approved_by as approved_by_id
+				p.approved_by_id
 			FROM papers p 
 			JOIN users u ON p.author_id = u.id 
 			LEFT JOIN categories c ON p.category_id = c.id 
@@ -183,6 +189,7 @@ export default async function handler(
 
 		// For backward compatibility with existing frontend, return just the papers array
 		console.log("Admin papers response:", papers.length, "papers");
+		console.log("Returning papers array:", Array.isArray(papers), papers);
 		res.status(200).json(papers);
 	} catch (error) {
 		console.error("Admin papers fetch error:", error);

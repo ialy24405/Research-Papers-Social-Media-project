@@ -41,14 +41,14 @@ export const API_ENDPOINTS = {
 		SAVED_PAPERS: "/users/me/saved-papers",
 	},
 
-	// Admin endpoints
+	// Admin endpoints - temporarily forcing to use Next.js API routes
 	ADMIN: {
-		USERS: "/admin/users",
-		PAPERS: "/admin/papers",
-		UPDATE_USER_ROLE: (id: string) => `/admin/users/${id}/role`,
-		MODERATE_PAPER: (id: string) => `/admin/papers/${id}/moderate`,
-		UPDATE_PAPER_STATUS: (id: string) => `/admin/papers/${id}/status`,
-		CATEGORIES: "/admin/categories",
-		DELETE_CATEGORY: (id: string) => `/admin/categories/${id}`,
+		USERS: "/api/admin/users",
+		PAPERS: "/api/admin/papers",
+		UPDATE_USER_ROLE: (id: string) => `/api/admin/users/${id}/role`,
+		MODERATE_PAPER: (id: string) => `/api/admin/papers/${id}/moderate`,
+		UPDATE_PAPER_STATUS: (id: string) => `/api/admin/papers/${id}/status`,
+		CATEGORIES: "/api/admin/categories",
+		DELETE_CATEGORY: (id: string) => `/api/admin/categories/${id}`,
 	},
 } as const;
