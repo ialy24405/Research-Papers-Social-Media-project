@@ -12,29 +12,33 @@ export default async function handler(
 	}
 
 	try {
-		const { email, username, password, firstName, lastName, fullName } =
+		const { email, password, fullName, birthDate, collegeName, country, ssn } =
 			req.body;
 
 		// Validation
-		if (!email || !password) {
-			return res.status(400).json({ error: "Email and password are required" });
+		if (
+			!email ||
+			!password ||
+			!fullName ||
+			!birthDate ||
+			!collegeName ||
+			!country ||
+			!ssn
+		) {
+			return res
+				.status(400)
+				.json({ error: "All required fields must be provided" });
 		}
 
-		const finalFullName =
-			fullName || `${firstName || ""} ${lastName || ""}`.trim() || "User";
-		const finalUsername =
-			username || email.split("@")[0] + Math.floor(Math.random() * 1000);
-
 		// Check if user exists
-		const existingUser = await query(
-			"SELECT id FROM users WHERE email = $1 OR username = $2",
-			[email, finalUsername]
-		);
+		const existingUser = await query("SELECT id FROM users WHERE email = $1", [
+			email,
+		]);
 
 		if (existingUser.rows.length > 0) {
 			return res
 				.status(409)
-				.json({ error: "User with this email or username already exists" });
+				.json({ error: "User with this email already exists" });
 		}
 
 		// Hash password
@@ -42,17 +46,10 @@ export default async function handler(
 
 		// Create user
 		const result = await query(
-			`INSERT INTO users (email, username, password, first_name, last_name, full_name) 
-       VALUES ($1, $2, $3, $4, $5, $6) 
-       RETURNING id, email, username, full_name, role, created_at`,
-			[
-				email,
-				finalUsername,
-				hashedPassword,
-				firstName || "",
-				lastName || "",
-				finalFullName,
-			]
+			`INSERT INTO users (full_name, email, password_hash, birth_date, college_name, country, ssn) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7) 
+       RETURNING id, email, full_name, role, created_at`,
+			[fullName, email, hashedPassword, birthDate, collegeName, country, ssn]
 		);
 
 		const user = result.rows[0];
@@ -70,21 +67,18 @@ export default async function handler(
 			user: {
 				id: user.id,
 				email: user.email,
-				username: user.username,
 				fullName: user.full_name,
 				role: user.role,
 			},
 		});
 	} catch (error) {
 		console.error("Registration error:", error);
-		res
-			.status(500)
-			.json({
-				error: "Internal server error",
-				details:
-					process.env.NODE_ENV === "development"
-						? (error as Error).message
-						: undefined,
-			});
+		res.status(500).json({
+			error: "Internal server error",
+			details:
+				process.env.NODE_ENV === "development"
+					? (error as Error).message
+					: undefined,
+		});
 	}
 }
