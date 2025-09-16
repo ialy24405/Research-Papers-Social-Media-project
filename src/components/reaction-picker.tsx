@@ -73,7 +73,11 @@ export function ReactionPicker({
 				onReactionSelect("like");
 			}
 		};
-		return <div onClick={handleClick} className="cursor-pointer">{children}</div>;
+		return (
+			<div onClick={handleClick} className="cursor-pointer">
+				{children}
+			</div>
+		);
 	}
 
 	const [open, setOpen] = useState(false);

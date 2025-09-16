@@ -140,9 +140,7 @@ export function PaperCard({ paper }: PaperCardProps) {
 						<div
 							className={`flex items-center gap-1 cursor-pointer ${reactionColor}`}
 						>
-							<ReactionIcon
-								className={`h-4 w-4 ${reactionColor}`}
-							/>
+							<ReactionIcon className={`h-4 w-4 ${reactionColor}`} />
 							<span>{reactionCount}</span>
 						</div>
 					</ReactionPicker>

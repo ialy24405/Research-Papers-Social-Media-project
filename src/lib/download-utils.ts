@@ -64,11 +64,14 @@ export const downloadPDF = async (
 		console.error("Download failed:", error);
 
 		// Check if this is a placeholder/localhost URL
-		const isPlaceholder = fullUrl.includes("temp-") || fullUrl.includes("localhost");
-		
+		const isPlaceholder =
+			fullUrl.includes("temp-") || fullUrl.includes("localhost");
+
 		if (showAlert) {
 			if (isPlaceholder) {
-				alert("This is a placeholder PDF file. Download is not available for demo content.");
+				alert(
+					"This is a placeholder PDF file. Download is not available for demo content."
+				);
 			} else {
 				alert("Download failed. Opening PDF in new tab instead.");
 			}
