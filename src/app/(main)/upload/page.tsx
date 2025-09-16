@@ -113,8 +113,8 @@ export default function UploadPage() {
 
 		try {
 			await uploadPaper({
-				title,
-				description,
+				title:title,
+				description :description,
 				categoryId: categoryId,
 				pdfFile: file,
 			});

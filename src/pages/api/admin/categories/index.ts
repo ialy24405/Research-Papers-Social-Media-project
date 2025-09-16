@@ -64,11 +64,11 @@ export default async function handler(
 				id: row.id,
 				name: row.name,
 				description: row.description,
-				image_url: row.image_url,
-				image_hint: row.image_hint,
+				imageUrl: row.image_url, // Convert to camelCase for consistency
+				imageHint: row.image_hint, // Convert to camelCase for consistency
 			}));
 
-			res.status(200).json({ categories });
+			res.status(200).json(categories);
 		} else if (req.method === "POST") {
 			// Create new category
 			const { id, name, description, image_url, image_hint } = req.body;

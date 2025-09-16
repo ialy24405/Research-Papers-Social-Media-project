@@ -63,10 +63,15 @@ export const useAdminCategories = () => {
 
 			const categoriesData = await response.json();
 			console.log("Fetched categories:", categoriesData);
+			console.log("Response type:", typeof categoriesData);
+			console.log("Is array:", Array.isArray(categoriesData));
 
 			// Ensure we have an array before trying to map
 			if (!Array.isArray(categoriesData)) {
-				throw new Error("Invalid response format: expected array");
+				console.error("Invalid response format. Received:", categoriesData);
+				throw new Error(
+					`Invalid response format: expected array, got ${typeof categoriesData}`
+				);
 			}
 
 			// set categories manually to verify field names

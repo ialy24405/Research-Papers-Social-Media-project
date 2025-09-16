@@ -105,14 +105,7 @@ export default async function handler(
 				created_at: row.created_at,
 			}));
 
-			res.status(200).json({
-				users,
-				pagination: {
-					total: parseInt(countResult.rows[0].total, 10),
-					limit: limitNum,
-					offset: offsetNum,
-				},
-			});
+			res.status(200).json(users);
 		} else {
 			res.status(405).json({ error: "Method not allowed" });
 		}
