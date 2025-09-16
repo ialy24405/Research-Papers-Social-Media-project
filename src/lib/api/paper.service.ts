@@ -83,7 +83,7 @@ export const paperService = {
 			description: data.description,
 			categoryId: data.categoryId,
 			pdfUrl: data.pdfFile ? `temp-${Date.now()}-${data.pdfFile.name}` : null, // Placeholder URL
-			aiSummary: null // Optional field
+			aiSummary: null, // Optional field
 		};
 
 		console.log("Sending upload data:", uploadData);

@@ -40,7 +40,7 @@ export default async function handler(
 
 	try {
 		console.log("Upload API received body:", req.body);
-		console.log("Content-Type:", req.headers['content-type']);
+		console.log("Content-Type:", req.headers["content-type"]);
 
 		const { title, description, categoryId, pdfUrl, aiSummary } = req.body;
 
@@ -49,15 +49,15 @@ export default async function handler(
 			description,
 			categoryId,
 			pdfUrl,
-			aiSummary
+			aiSummary,
 		});
 
 		if (!title || !categoryId) {
-			console.log("Missing required fields:", { 
-				title: !!title, 
+			console.log("Missing required fields:", {
+				title: !!title,
 				categoryId: !!categoryId,
 				titleValue: title,
-				categoryIdValue: categoryId
+				categoryIdValue: categoryId,
 			});
 			return res.status(400).json({
 				error: "Missing required fields: title and categoryId are required.",
