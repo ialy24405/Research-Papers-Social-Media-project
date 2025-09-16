@@ -715,8 +715,8 @@ export default function AdminPage() {
 				id: category?.id || "",
 				name: category?.name || "",
 				description: category?.description || "",
-				image_url: category?.image_url || "",
-				image_hint: category?.image_hint || "",
+				imageUrl: category?.imageUrl || "",
+				imageHint: category?.imageHint || "",
 			});
 
 			const handleSubmit = async (e: React.FormEvent) => {
@@ -775,9 +775,9 @@ export default function AdminPage() {
 						<Label htmlFor="categoryImageUrl">Image URL</Label>
 						<Input
 							id="categoryImageUrl"
-							value={formData.image_url}
+							value={formData.imageUrl}
 							onChange={(e) =>
-								setFormData((prev) => ({ ...prev, image_url: e.target.value }))
+								setFormData((prev) => ({ ...prev, imageUrl: e.target.value }))
 							}
 							placeholder="Enter image URL (optional)"
 							type="url"
@@ -787,7 +787,7 @@ export default function AdminPage() {
 						<Label htmlFor="categoryImageHint">Image Hint</Label>
 						<Input
 							id="categoryImageHint"
-							value={formData.image_hint}
+							value={formData.imageHint}
 							onChange={(e) =>
 								setFormData((prev) => ({ ...prev, imageHint: e.target.value }))
 							}
@@ -858,9 +858,9 @@ export default function AdminPage() {
 												{category.description || "No description"}
 											</TableCell>
 											<TableCell className="max-w-xs truncate">
-												{category.image_url ? (
+												{category.imageUrl ? (
 													<a
-														href={category.image_url}
+														href={category.imageUrl}
 														target="_blank"
 														rel="noopener noreferrer"
 														className="text-blue-600 hover:underline"

@@ -6,23 +6,23 @@ export interface AdminCategory {
 	id: string;
 	name: string;
 	description?: string;
-	image_url?: string;
-	image_hint?: string;
+	imageUrl?: string;
+	imageHint?: string;
 }
 
 export interface CategoryCreateData {
 	id: string;
 	name: string;
 	description?: string;
-	image_url?: string;
-	image_hint?: string;
+	imageUrl?: string;
+	imageHint?: string;
 }
 
 export interface CategoryUpdateData {
 	name?: string;
 	description?: string;
-	image_url?: string;
-	image_hint?: string;
+	imageUrl?: string;
+	imageHint?: string;
 }
 
 export const useAdminCategories = () => {
@@ -63,19 +63,26 @@ export const useAdminCategories = () => {
 
 			const categoriesData = await response.json();
 			console.log("Fetched categories:", categoriesData);
+
+			// Ensure we have an array before trying to map
+			if (!Array.isArray(categoriesData)) {
+				throw new Error("Invalid response format: expected array");
+			}
+
 			// set categories manually to verify field names
 			const formattedCategories = categoriesData.map((category: any) => ({
 				id: category.id,
 				name: category.name,
 				description: category.description,
-				image_url: category.image_url,
-				image_hint: category.image_hint,
+				imageUrl: category.imageUrl, // API returns camelCase
+				imageHint: category.imageHint, // API returns camelCase
 			}));
 			setCategories(formattedCategories);
 			return { success: true };
 		} catch (error: any) {
 			console.error("Fetch categories error:", error);
 			setError(error.message);
+			setCategories([]); // Ensure categories is always an array
 			return { success: false, error: error.message };
 		} finally {
 			setIsLoading(false);
@@ -143,7 +150,7 @@ export const useAdminCategories = () => {
 			}
 
 			// Refresh categories list after successful update
-		
+
 			await fetchCategories();
 			return { success: true };
 		} catch (error: any) {

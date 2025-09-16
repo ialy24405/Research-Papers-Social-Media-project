@@ -39,28 +39,29 @@ export default async function handler(
 	}
 
 	try {
-		const { title, abstract, content, categoryId, fileUrl } = req.body;
+		const { title, description, categoryId, pdfUrl, aiSummary } = req.body;
 
-		if (!title || !abstract || !categoryId) {
+		if (!title || !categoryId ) {
 			return res.status(400).json({
-				error: "Missing required fields: title, abstract, or categoryId",
+				error:
+					"Missing required fields: title or categoryId.",
 			});
 		}
 
 		// Insert paper into database
 		const result = await query(
 			`
-			INSERT INTO papers (title, abstract, content, file_url, category_id, author_id, status, created_at, updated_at)
+			INSERT INTO papers (title, description, author_id, category_id, pdf_url, ai_summary, status, created_at, updated_at)
 			VALUES ($1, $2, $3, $4, $5, $6, 'pending', NOW(), NOW())
-			RETURNING id, title, abstract, content, file_url, category_id, author_id, status, created_at, updated_at
+			RETURNING id, title, description, author_id, category_id, pdf_url, ai_summary, status, created_at, updated_at
 		`,
 			[
 				title,
-				abstract,
-				content,
-				fileUrl || null,
-				parseInt(categoryId),
+				description,
 				req.userId,
+				categoryId, // Keep as string since category_id is VARCHAR(100)
+				pdfUrl,
+				aiSummary || null,
 			]
 		);
 
@@ -71,11 +72,11 @@ export default async function handler(
 			paper: {
 				id: paper.id,
 				title: paper.title,
-				abstract: paper.abstract,
-				content: paper.content,
-				fileUrl: paper.file_url,
+				description: paper.description,
+				pdfUrl: paper.pdf_url,
 				categoryId: paper.category_id,
 				authorId: paper.author_id,
+				aiSummary: paper.ai_summary,
 				status: paper.status,
 				createdAt: paper.created_at,
 				updatedAt: paper.updated_at,

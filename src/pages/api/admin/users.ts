@@ -43,9 +43,12 @@ export default async function handler(req: AuthRequest, res: NextApiResponse) {
 				id,
 				email,
 				full_name,
+				birth_date,
+				college_name,
+				country,
 				role,
 				created_at,
-				avatar_url ,
+				avatar_url
 			FROM users
 		`;
 
@@ -80,8 +83,11 @@ export default async function handler(req: AuthRequest, res: NextApiResponse) {
 			id: user.id,
 			email: user.email,
 			full_name: user.full_name,
+			birth_date: user.birth_date,
+			college_name: user.college_name,
+			country: user.country,
 			role: user.role,
-			createdAt: user.created_at,
+			created_at: user.created_at,
 			avatar_url: user.avatar_url,
 		}));
 
