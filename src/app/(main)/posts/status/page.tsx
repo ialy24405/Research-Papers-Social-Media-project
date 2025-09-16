@@ -159,14 +159,15 @@ export default function PostStatusPage() {
 									<div className="flex justify-center items-center gap-3 text-muted-foreground">
 										<span className="flex items-center gap-1">
 											<Heart className="w-4 h-4" />{" "}
-											{paper.interactions.reactions}
+											{paper.interactions?.reactions || 0}
 										</span>
 										<span className="flex items-center gap-1">
 											<MessageCircle className="w-4 h-4" />{" "}
-											{paper.interactions.comments}
+											{paper.interactions?.comments || 0}
 										</span>
 										<span className="flex items-center gap-1">
-											<Save className="w-4 h-4" /> {paper.interactions.saves}
+											<Save className="w-4 h-4" />{" "}
+											{paper.interactions?.saves || 0}
 										</span>
 									</div>
 								) : paper.status === "rejected" ? (

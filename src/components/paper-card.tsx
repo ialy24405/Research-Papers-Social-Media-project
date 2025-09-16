@@ -49,7 +49,7 @@ export function PaperCard({ paper }: PaperCardProps) {
 		stats,
 		toggleReaction,
 		isLoading,
-	} = usePaperReaction(paper.id, paper.interactions.reactions);
+	} = usePaperReaction(paper.id, paper.interactions?.reactions || 0);
 
 	useEffect(() => {
 		setTimeAgo(
@@ -113,10 +113,11 @@ export function PaperCard({ paper }: PaperCardProps) {
 						<Heart className="h-4 w-4" /> {reactionCount}
 					</div>
 					<div className="flex items-center gap-1">
-						<MessageCircle className="h-4 w-4" /> {paper.interactions.comments}
+						<MessageCircle className="h-4 w-4" />{" "}
+						{paper.interactions?.comments || 0}
 					</div>
 					<div className="flex items-center gap-1">
-						<Bookmark className="h-4 w-4" /> {paper.interactions.saves}
+						<Bookmark className="h-4 w-4" /> {paper.interactions?.saves || 0}
 					</div>
 				</div>
 				<div className="flex w-full items-center gap-2">
