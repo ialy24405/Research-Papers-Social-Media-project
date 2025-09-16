@@ -50,17 +50,27 @@ export default async function handler(
 	req: AuthenticatedRequest,
 	res: NextApiResponse
 ) {
+	console.log("Role change request:", {
+		method: req.method,
+		query: req.query,
+		body: req.body,
+		headers: req.headers.authorization ? "Bearer token present" : "No token",
+	});
+
 	// Authenticate user
 	if (!authenticateToken(req)) {
+		console.log("Authentication failed");
 		return res.status(401).json({ error: "Unauthorized" });
 	}
 
 	// Check admin access
 	if (!(await checkAdminAccess(req))) {
+		console.log("Admin access check failed");
 		return res.status(403).json({ error: "Admin access required" });
 	}
 
 	if (req.method !== "PATCH") {
+		console.log("Invalid method:", req.method);
 		return res.status(405).json({ error: "Method not allowed" });
 	}
 
@@ -72,10 +82,10 @@ export default async function handler(
 		return res.status(400).json({ error: "Invalid user ID" });
 	}
 
-	if (!role || !["user", "admin"].includes(role)) {
+	if (!role || !["user", "admin", "owner"].includes(role)) {
 		return res
 			.status(400)
-			.json({ error: "Invalid role. Must be 'user' or 'admin'" });
+			.json({ error: "Invalid role. Must be 'user', 'admin', or 'owner'" });
 	}
 
 	try {

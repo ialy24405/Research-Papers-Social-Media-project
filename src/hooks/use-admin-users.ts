@@ -99,22 +99,25 @@ export const useAdminUsers = () => {
 
 	const updateUserRole = async (userId: number, role: string) => {
 		try {
+			console.log("Updating user role:", { userId, role });
 			const token = getAuthToken();
 			if (!token) {
 				throw new Error("Authentication required");
 			}
 
-			const response = await fetch(
-				`${process.env.NEXT_PUBLIC_API_URL}/admin/users/${userId}/role`,
-				{
-					method: "PUT",
-					headers: {
-						"Content-Type": "application/json",
-						Authorization: `Bearer ${token}`,
-					},
-					body: JSON.stringify({ role }),
-				}
-			);
+			const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/admin/users/${userId}/role`;
+			console.log("API URL:", apiUrl);
+
+			const response = await fetch(apiUrl, {
+				method: "PATCH",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${token}`,
+				},
+				body: JSON.stringify({ role }),
+			});
+
+			console.log("Response status:", response.status);
 
 			if (!response.ok) {
 				const errorData = await response.json();

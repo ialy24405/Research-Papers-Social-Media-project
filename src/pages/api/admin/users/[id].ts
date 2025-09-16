@@ -90,51 +90,113 @@ export default async function handler(
 				createdAt: user.created_at,
 			});
 		} else if (req.method === "PUT") {
-			// Update user (role change)
-			const { role } = req.body;
+			// Update user (role change or profile data)
+			const { role, full_name, email, birth_date, college_name, country } =
+				req.body;
 
-			if (!role) {
-				return res.status(400).json({ error: "Role is required" });
-			}
-
-			const validRoles = ["user", "admin", "owner"];
-			if (!validRoles.includes(role)) {
-				return res.status(400).json({
-					error: "Invalid role",
-					validRoles,
-				});
-			}
-
-			// Prevent self-demotion from owner
-			if (req.userId === targetUserId) {
-				const currentUser = await query(
-					"SELECT role FROM users WHERE id = $1",
-					[req.userId]
-				);
-
-				if (currentUser.rows[0].role === "owner" && role !== "owner") {
+			// If role is provided, handle role update
+			if (role) {
+				const validRoles = ["user", "admin", "owner"];
+				if (!validRoles.includes(role)) {
 					return res.status(400).json({
-						error: "Cannot demote yourself from owner role",
+						error: "Invalid role",
+						validRoles,
 					});
 				}
+
+				// Prevent self-demotion from owner
+				if (req.userId === targetUserId) {
+					const currentUser = await query(
+						"SELECT role FROM users WHERE id = $1",
+						[req.userId]
+					);
+
+					if (currentUser.rows[0].role === "owner" && role !== "owner") {
+						return res.status(400).json({
+							error: "Cannot demote yourself from owner role",
+						});
+					}
+				}
+
+				const result = await query(
+					`UPDATE users 
+					SET role = $1
+					WHERE id = $2
+					RETURNING id, email, full_name, role, created_at`,
+					[role, targetUserId]
+				);
+
+				if (result.rows.length === 0) {
+					return res.status(404).json({ error: "User not found" });
+				}
+
+				res.status(200).json({
+					message: "User role updated successfully",
+					user: result.rows[0],
+				});
+			} else {
+				// Handle profile data updates
+				const updates = [];
+				const values = [];
+				let paramIndex = 1;
+
+				if (full_name !== undefined) {
+					updates.push(`full_name = $${paramIndex++}`);
+					values.push(full_name);
+				}
+				if (email !== undefined) {
+					updates.push(`email = $${paramIndex++}`);
+					values.push(email);
+				}
+				if (birth_date !== undefined) {
+					updates.push(`birth_date = $${paramIndex++}`);
+					values.push(birth_date);
+				}
+				if (college_name !== undefined) {
+					updates.push(`college_name = $${paramIndex++}`);
+					values.push(college_name);
+				}
+				if (country !== undefined) {
+					updates.push(`country = $${paramIndex++}`);
+					values.push(country);
+				}
+
+				if (updates.length === 0) {
+					return res.status(400).json({ error: "No valid fields to update" });
+				}
+
+				// Add updated_at timestamp
+				updates.push(`updated_at = NOW()`);
+				values.push(targetUserId);
+
+				const result = await query(
+					`UPDATE users 
+					SET ${updates.join(", ")}
+					WHERE id = $${paramIndex}
+					RETURNING id, email, full_name, birth_date, college_name, country, role, created_at, updated_at`,
+					values
+				);
+
+				if (result.rows.length === 0) {
+					return res.status(404).json({ error: "User not found" });
+				}
+
+				const user = result.rows[0];
+				res.status(200).json({
+					message: "User profile updated successfully",
+					user: {
+						id: user.id,
+						email: user.email,
+						full_name: user.full_name,
+						birth_date: user.birth_date,
+						college_name: user.college_name,
+						country: user.country,
+						role: user.role,
+						created_at: user.created_at,
+						updated_at: user.updated_at,
+					},
+				});
 			}
-
-			const result = await query(
-				`UPDATE users 
-				SET role = $1
-				WHERE id = $2
-				RETURNING id, email, full_name, role, created_at`,
-				[role, targetUserId]
-			);
-
-			if (result.rows.length === 0) {
-				return res.status(404).json({ error: "User not found" });
-			}
-
-			res.status(200).json({
-				message: "User role updated successfully",
-				user: result.rows[0],
-			});
 		} else if (req.method === "DELETE") {
 			// Delete user
 			// Check if trying to delete self

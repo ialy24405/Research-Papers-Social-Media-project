@@ -76,20 +76,21 @@ export const paperService = {
 		console.log("uploadPaper called with data:", data);
 		console.log("API endpoint:", API_ENDPOINTS.PAPERS.UPLOAD);
 
-		const formData = new FormData();
-		formData.append("title", data.title);
-		formData.append("description", data.description);
-		formData.append("categoryId", data.categoryId);
-		formData.append("pdfFile", data.pdfFile);
+		// For now, send as JSON since we're not handling actual file storage
+		// In a real implementation, you'd upload the file to a storage service first
+		const uploadData = {
+			title: data.title,
+			description: data.description,
+			categoryId: data.categoryId,
+			pdfUrl: data.pdfFile ? `temp-${Date.now()}-${data.pdfFile.name}` : null, // Placeholder URL
+			aiSummary: null // Optional field
+		};
 
-		console.log("FormData entries:");
-		for (const [key, value] of formData.entries()) {
-			console.log(`${key}:`, value);
-		}
+		console.log("Sending upload data:", uploadData);
 
-		return httpClient.upload<{ message: string; paperId: number }>(
+		return httpClient.post<{ message: string; paperId: number }>(
 			API_ENDPOINTS.PAPERS.UPLOAD,
-			formData
+			uploadData
 		);
 	},
 
