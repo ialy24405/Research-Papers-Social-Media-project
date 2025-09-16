@@ -61,11 +61,22 @@ export default async function handler(
 			stats[row.reaction_type as keyof typeof stats] = parseInt(row.count, 10);
 		});
 
-		res.status(200).json({
+		// Safely get total count, default to 0 if no reactions
+		const totalCount =
+			totalResult.rows.length > 0 ? parseInt(totalResult.rows[0].total, 10) : 0;
+
+		const responseData = {
 			paperId: paperId,
 			reactions: stats,
-			total: parseInt(totalResult.rows[0].total, 10),
-		});
+			total: totalCount,
+		};
+
+		console.log(
+			`📊 Reaction stats API response for paper ${paperId}:`,
+			responseData
+		);
+
+		res.status(200).json(responseData);
 	} catch (error) {
 		console.error("Get reaction stats error:", error);
 		res.status(500).json({

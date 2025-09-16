@@ -319,7 +319,22 @@ export const getReactionStats = async (
 
 		if (response.ok) {
 			const result = await response.json();
-			return result.stats;
+			console.log(
+				`📊 Frontend received reaction stats for paper ${paperId}:`,
+				result
+			);
+
+			// API returns {paperId, reactions, total} directly
+			const formattedStats = {
+				like: result.reactions?.like || 0,
+				love: result.reactions?.love || 0,
+				support: result.reactions?.support || 0,
+				insightful: result.reactions?.insightful || 0,
+				total: result.total || 0,
+			};
+
+			console.log(`📊 Formatted reaction stats:`, formattedStats);
+			return formattedStats;
 		} else {
 			// Fallback to localStorage
 			return getReactionStatsLocal(paperId);
