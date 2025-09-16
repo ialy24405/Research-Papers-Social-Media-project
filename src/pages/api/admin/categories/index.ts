@@ -64,14 +64,14 @@ export default async function handler(
 				id: row.id,
 				name: row.name,
 				description: row.description,
-				imageUrl: row.image_url,
-				imageHint: row.image_hint,
+				image_url: row.image_url,
+				image_hint: row.image_hint,
 			}));
 
 			res.status(200).json({ categories });
 		} else if (req.method === "POST") {
 			// Create new category
-			const { id, name, description, imageUrl, imageHint } = req.body;
+			const { id, name, description, image_url, image_hint } = req.body;
 
 			// Validate required fields
 			if (!id || !name) {
@@ -96,7 +96,7 @@ export default async function handler(
 				`INSERT INTO categories (id, name, description, image_url, image_hint) 
 				VALUES ($1, $2, $3, $4, $5) 
 				RETURNING *`,
-				[id, name, description || null, imageUrl || null, imageHint || null]
+				[id, name, description || null, image_url || null, image_hint || null]
 			);
 
 			const category = result.rows[0];
@@ -106,8 +106,8 @@ export default async function handler(
 					id: category.id,
 					name: category.name,
 					description: category.description,
-					imageUrl: category.image_url,
-					imageHint: category.image_hint,
+					image_url: category.image_url,
+					image_hint: category.image_hint,
 				},
 			});
 		} else {

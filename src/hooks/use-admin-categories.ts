@@ -62,6 +62,7 @@ export const useAdminCategories = () => {
 			}
 
 			const categoriesData = await response.json();
+			console.log("Fetched categories:", categoriesData);
 			setCategories(categoriesData);
 			return { success: true };
 		} catch (error: any) {

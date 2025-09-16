@@ -133,7 +133,8 @@ export default async function handler(
 			) reaction_counts ON p.id = reaction_counts.paper_id
 			LEFT JOIN (
 				SELECT paper_id, COUNT(*) as comment_count
-				FROM paper_comments
+				FROM paper_interactions
+				WHERE interaction_type = 'comment'
 				GROUP BY paper_id
 			) comment_counts ON p.id = comment_counts.paper_id
 			LEFT JOIN (

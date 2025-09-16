@@ -76,12 +76,12 @@ export default async function handler(
 				id: category.id,
 				name: category.name,
 				description: category.description,
-				imageUrl: category.image_url,
-				imageHint: category.image_hint,
+				image_url: category.image_url,
+				image_hint: category.image_hint,
 			});
 		} else if (req.method === "PUT") {
 			// Update category
-			const { name, description, imageUrl, imageHint } = req.body;
+			const { name, description, image_url, image_hint } = req.body;
 
 			if (!name) {
 				return res.status(400).json({ error: "Category name is required" });
@@ -95,8 +95,8 @@ export default async function handler(
 				[
 					name,
 					description || null,
-					imageUrl || null,
-					imageHint || null,
+					image_url || null,
+					image_hint || null,
 					categoryId,
 				]
 			);
@@ -112,8 +112,8 @@ export default async function handler(
 					id: category.id,
 					name: category.name,
 					description: category.description,
-					imageUrl: category.image_url,
-					imageHint: category.image_hint,
+					image_url: category.image_url,
+					image_hint: category.image_hint,
 				},
 			});
 		} else if (req.method === "DELETE") {

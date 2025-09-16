@@ -42,11 +42,10 @@ export default async function handler(req: AuthRequest, res: NextApiResponse) {
 			SELECT 
 				id,
 				email,
-				full_name as name,
+				full_name,
 				role,
 				created_at,
-				avatar_url as profile_image,
-				last_login as last_login_at
+				avatar_url ,
 			FROM users
 		`;
 
@@ -80,11 +79,10 @@ export default async function handler(req: AuthRequest, res: NextApiResponse) {
 		const response = users.rows.map((user: any) => ({
 			id: user.id,
 			email: user.email,
-			name: user.name,
+			full_name: user.full_name,
 			role: user.role,
 			createdAt: user.created_at,
-			profileImage: user.profile_image,
-			lastLoginAt: user.last_login_at,
+			avatar_url: user.avatar_url,
 		}));
 
 		res.status(200).json(response);

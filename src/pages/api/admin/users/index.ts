@@ -96,13 +96,13 @@ export default async function handler(
 			const users = usersResult.rows.map((row: any) => ({
 				id: row.id,
 				email: row.email,
-				fullName: row.full_name,
-				birthDate: row.birth_date,
-				collegeName: row.college_name,
+				full_name: row.full_name,
+				birth_date: row.birth_date,
+				college_name: row.college_name,
 				country: row.country,
-				avatarUrl: row.avatar_url,
+				avatar_url: row.avatar_url,
 				role: row.role,
-				createdAt: row.created_at,
+				created_at: row.created_at,
 			}));
 
 			res.status(200).json({

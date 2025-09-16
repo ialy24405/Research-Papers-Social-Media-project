@@ -11,6 +11,7 @@ export default async function handler(
 
 	try {
 		const result = await query("SELECT * FROM categories ORDER BY name");
+		console.log("Categories fetched from DB:", result.rows);
 		res.status(200).json(result.rows);
 	} catch (error) {
 		console.error("Categories fetch error:", error);
