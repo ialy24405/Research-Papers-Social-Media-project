@@ -50,15 +50,25 @@ export default async function handler(
 	req: AuthenticatedRequest,
 	res: NextApiResponse
 ) {
+	console.log("Admin papers endpoint called");
+	console.log("Request method:", req.method);
+	console.log("Request query:", req.query);
+
 	// Authenticate user
 	if (!authenticateToken(req)) {
+		console.log("Authentication failed");
 		return res.status(401).json({ error: "Unauthorized" });
 	}
 
+	console.log("Authentication successful, user ID:", req.userId);
+
 	// Check admin access
 	if (!(await checkAdminAccess(req))) {
+		console.log("Admin access check failed");
 		return res.status(403).json({ error: "Admin access required" });
 	}
+
+	console.log("Admin access confirmed, user role:", req.userRole);
 
 	if (req.method !== "GET") {
 		return res.status(405).json({ error: "Method not allowed" });
@@ -66,6 +76,39 @@ export default async function handler(
 
 	try {
 		const { status, category, author, page = "1", limit = "20" } = req.query;
+
+		console.log("Admin papers request:", {
+			status,
+			category,
+			author,
+			page,
+			limit,
+		});
+
+		// First, check if there are any papers at all
+		const allPapersCheck = await query("SELECT COUNT(*) as total FROM papers");
+		console.log("Total papers in database:", allPapersCheck.rows[0].total);
+
+		// Check if there are any users
+		const usersCheck = await query("SELECT COUNT(*) as total FROM users");
+		console.log("Total users in database:", usersCheck.rows[0].total);
+
+		// Check if the papers table exists and has the right structure
+		const tableCheck = await query(`
+			SELECT column_name, data_type 
+			FROM information_schema.columns 
+			WHERE table_name = 'papers' 
+			ORDER BY ordinal_position
+		`);
+		console.log("Papers table structure:", tableCheck.rows);
+
+		// Get a sample of actual paper records if they exist
+		if (allPapersCheck.rows[0].total > 0) {
+			const samplePapers = await query(
+				"SELECT id, title, status, author_id, category_id FROM papers LIMIT 3"
+			);
+			console.log("Sample papers:", samplePapers.rows);
+		}
 
 		let whereConditions = [];
 		let queryParams = [];
@@ -114,6 +157,10 @@ export default async function handler(
 		const countResult = await query(countQuery, queryParams);
 		const totalPapers = parseInt(countResult.rows[0].total);
 
+		console.log("Papers count query:", countQuery);
+		console.log("Query params:", queryParams);
+		console.log("Total papers found:", totalPapers);
+
 		// Get papers with pagination and interaction counts
 		const papersQuery = `
 			SELECT p.*, u.full_name as author_name, u.email as author_email, u.avatar_url as author_avatar,
@@ -122,7 +169,7 @@ export default async function handler(
 				COALESCE(comment_counts.comment_count, 0) as comment_count,
 				COALESCE(save_counts.save_count, 0) as save_count,
 				p.rejection_reason,
-				p.approved_by as approved_by_id
+				p.approved_by_id as approved_by_id
 			FROM papers p 
 			JOIN users u ON p.author_id = u.id 
 			LEFT JOIN categories c ON p.category_id = c.id 
@@ -151,6 +198,9 @@ export default async function handler(
 		queryParams.push(limitNum.toString(), offset.toString());
 
 		const papersResult = await query(papersQuery, queryParams);
+
+		console.log("Papers query:", papersQuery);
+		console.log("Papers result rows:", papersResult.rows.length);
 
 		// Transform the data to match backend format
 		const papers = papersResult.rows.map((row: any) => ({

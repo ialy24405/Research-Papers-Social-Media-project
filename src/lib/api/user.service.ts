@@ -5,6 +5,7 @@ import type { User, Paper } from "../types";
 export interface UserPaper {
 	id: number;
 	name: string;
+	title: string;
 	status: "approved" | "pending" | "rejected";
 	rejectionReason?: string;
 	createdAt: string;

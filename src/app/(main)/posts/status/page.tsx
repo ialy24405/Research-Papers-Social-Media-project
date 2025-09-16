@@ -136,7 +136,7 @@ export default function PostStatusPage() {
 					papers.map((paper) => (
 						<TableRow key={paper.id}>
 							<TableCell className="font-medium">
-								<div className="truncate w-40 md:w-full">{paper.name}</div>
+								<div className="truncate w-40 md:w-full">{paper.title}</div>
 								<div className="text-muted-foreground text-xs md:hidden">
 									<Badge
 										variant={statusVariant[paper.status]}
