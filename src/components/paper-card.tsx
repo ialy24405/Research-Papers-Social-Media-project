@@ -21,6 +21,9 @@ import {
 	MessageCircle,
 	MoreVertical,
 	Share2,
+	Star,
+	ThumbsUp,
+	Lightbulb,
 } from "lucide-react";
 import type { Paper } from "@/lib/types";
 import { getPlaceholderImage } from "@/lib/utils";
@@ -49,7 +52,25 @@ export function PaperCard({ paper }: PaperCardProps) {
 		stats,
 		toggleReaction,
 		isLoading,
-	} = usePaperReaction(paper.id, paper.interactions?.reactions || 0);
+	} = usePaperReaction(paper.id);
+
+	// Map reaction types to icons and colors
+	const ReactionIcon =
+		currentReaction === "love"
+			? Star
+			: currentReaction === "support"
+			? ThumbsUp
+			: currentReaction === "insightful"
+			? Lightbulb
+			: Heart;
+	const reactionColor =
+		currentReaction === "love"
+			? "text-pink-500"
+			: currentReaction === "support"
+			? "text-blue-500"
+			: currentReaction === "insightful"
+			? "text-yellow-500"
+			: "text-red-500";
 
 	useEffect(() => {
 		setTimeAgo(
@@ -68,7 +89,7 @@ export function PaperCard({ paper }: PaperCardProps) {
 				<div className="flex items-start justify-between">
 					<Link href={`/papers/${paper.id}`} className="flex-1">
 						<CardTitle className="font-headline text-lg hover:text-primary transition-colors">
-							{paper.name}
+							{paper.title}
 						</CardTitle>
 					</Link>
 					<DropdownMenu>
@@ -108,25 +129,34 @@ export function PaperCard({ paper }: PaperCardProps) {
 				<CardDescription>{paper.description}</CardDescription>
 			</CardContent>
 			<CardFooter className="flex-col items-start gap-4">
-				<div className="flex items-center flex-wrap gap-4 text-sm text-muted-foreground">
-					<div className="flex items-center gap-1">
-						<Heart className="h-4 w-4" /> {reactionCount}
-					</div>
-					<div className="flex items-center gap-1">
-						<MessageCircle className="h-4 w-4" />{" "}
-						{paper.interactions?.comments || 0}
-					</div>
-					<div className="flex items-center gap-1">
-						<Bookmark className="h-4 w-4" /> {paper.interactions?.saves || 0}
-					</div>
-				</div>
-				<div className="flex w-full items-center gap-2">
+				{/* Stats row: reactions, comments, saves */}
+				<div className="flex items-center flex-wrap gap-4 text-sm">
 					<ReactionPicker
 						onReactionSelect={toggleReaction}
 						currentReaction={currentReaction}
 						isLoading={isLoading}
 						size="sm"
-					/>
+					>
+						<div
+							className={`flex items-center gap-1 cursor-pointer ${reactionColor}`}
+						>
+							<ReactionIcon
+								className={`h-4 w-4 ${reactionColor}`}
+							/>
+							<span>{reactionCount}</span>
+						</div>
+					</ReactionPicker>
+					<div className="flex items-center gap-1 text-muted-foreground">
+						<MessageCircle className="h-4 w-4" />{" "}
+						{paper.interactions?.comments || 0}
+					</div>
+					<div className="flex items-center gap-1 text-muted-foreground">
+						<Bookmark className="h-4 w-4" /> {paper.interactions?.saves || 0}
+					</div>
+				</div>
+
+				{/* Actions row: comment, save, download */}
+				<div className="flex w-full items-center gap-2">
 					<Button variant="outline" size="sm" className="flex-1 min-w-0">
 						<MessageCircle className="mr-2 h-4 w-4" /> Comment
 					</Button>

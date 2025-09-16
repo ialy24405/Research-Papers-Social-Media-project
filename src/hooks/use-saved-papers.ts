@@ -16,8 +16,15 @@ export function useSavedPapers() {
 				setError(null);
 				console.log("Fetching saved papers...");
 				const savedPapers = await userService.getSavedPapers();
-				console.log("Saved papers fetched:", savedPapers);
-				setPapers(savedPapers);
+				   console.log("Saved papers fetched:", savedPapers);
+				   // Handle API returning { papers: Paper[], pagination: {...} } or array directly
+				   if (Array.isArray(savedPapers)) {
+					   setPapers(savedPapers);
+				   } else if (savedPapers && typeof savedPapers === 'object' && 'papers' in savedPapers) {
+					   setPapers((savedPapers as any).papers);
+				   } else {
+					   setPapers([]);
+				   }
 			} catch (err: any) {
 				console.error("Failed to fetch saved papers:", err);
 				setError(err.message || "Failed to fetch saved papers");

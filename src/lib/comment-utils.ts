@@ -163,9 +163,11 @@ export const getComments = async (
 		});
 
 		if (response.ok) {
-			const comments = await response.json();
-			console.log("✅ Comments fetched successfully:", comments);
+			const result = await response.json();
+			console.log("✅ Comments fetched successfully:", result);
 
+			// Extract comments array from the response
+			const comments = result.comments || [];
 			return { success: true, comments };
 		} else {
 			let errorData: any = {};

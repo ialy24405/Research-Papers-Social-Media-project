@@ -63,6 +63,19 @@ export function ReactionPicker({
 	children,
 	size = "lg",
 }: ReactionPickerProps) {
+	// If a child element is provided (custom trigger), make it toggle reaction on click
+	if (children) {
+		const handleClick = () => {
+			if (isLoading) return;
+			if (currentReaction) {
+				onReactionSelect(currentReaction);
+			} else {
+				onReactionSelect("like");
+			}
+		};
+		return <div onClick={handleClick} className="cursor-pointer">{children}</div>;
+	}
+
 	const [open, setOpen] = useState(false);
 
 	const handleReactionClick = (reactionType: ReactionData["type"]) => {

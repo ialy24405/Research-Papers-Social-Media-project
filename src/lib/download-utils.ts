@@ -16,10 +16,10 @@ export const downloadPDF = async (
 ) => {
 	const { showAlert = true, fallbackToNewTab = true } = options;
 
-	try {
-		// Normalize the URL
-		const fullUrl = pdfUrl.startsWith("http") ? pdfUrl : getBackendUrl(pdfUrl);
+	// Normalize the URL
+	const fullUrl = pdfUrl.startsWith("http") ? pdfUrl : getBackendUrl(pdfUrl);
 
+	try {
 		console.log("Starting download for:", fullUrl);
 
 		// Fetch the PDF file
@@ -63,15 +63,19 @@ export const downloadPDF = async (
 	} catch (error) {
 		console.error("Download failed:", error);
 
+		// Check if this is a placeholder/localhost URL
+		const isPlaceholder = fullUrl.includes("temp-") || fullUrl.includes("localhost");
+		
 		if (showAlert) {
-			alert("Download failed. Opening PDF in new tab instead.");
+			if (isPlaceholder) {
+				alert("This is a placeholder PDF file. Download is not available for demo content.");
+			} else {
+				alert("Download failed. Opening PDF in new tab instead.");
+			}
 		}
 
-		// Fallback: open in new tab
-		if (fallbackToNewTab) {
-			const fullUrl = pdfUrl.startsWith("http")
-				? pdfUrl
-				: getBackendUrl(pdfUrl);
+		// Don't open placeholder PDFs in new tab as they won't work
+		if (fallbackToNewTab && !isPlaceholder) {
 			window.open(fullUrl, "_blank");
 		}
 
