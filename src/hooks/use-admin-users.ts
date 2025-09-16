@@ -73,7 +73,20 @@ export const useAdminUsers = () => {
 			}
 
 			const userData = await response.json();
-			setUsers(userData);
+			// console.log("Fetched users:", userData);
+			// set users manually to verify field names
+			const formattedUsers = userData.map((user: any) => ({
+				id: user.id,
+				full_name: user.full_name,
+				email: user.email,
+				birth_date: user.birth_date,
+				college_name: user.college_name,
+				country: user.country,
+				avatar_url: user.avatar_url,
+				role: user.role,
+				created_at: user.created_at,
+			}));
+			setUsers(formattedUsers);
 			return { success: true };
 		} catch (error: any) {
 			console.error("Fetch users error:", error);
