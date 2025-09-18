@@ -1,5 +1,5 @@
 import { httpClient } from "./client";
-import { API_ENDPOINTS } from "./config";
+import { API_ENDPOINTS, API_CONFIG } from "./config";
 import type { Paper, PaperComment, PaperUploadData } from "../types";
 
 export interface PapersListParams {
@@ -72,26 +72,48 @@ export const paperService = {
 	 */
 	async uploadPaper(
 		data: PaperUploadData
-	): Promise<{ message: string; paperId: number }> {
+	): Promise<{ message: string; paper: any }> {
 		console.log("uploadPaper called with data:", data);
-		console.log("API endpoint:", API_ENDPOINTS.PAPERS.UPLOAD);
 
-		// For now, send as JSON since we're not handling actual file storage
-		// In a real implementation, you'd upload the file to a storage service first
-		const uploadData = {
-			title: data.title,
-			description: data.description,
-			categoryId: data.categoryId,
-			pdfUrl: data.pdfFile ? `temp-${Date.now()}-${data.pdfFile.name}` : null, // Placeholder URL
-			aiSummary: null, // Optional field
-		};
+		if (!data.pdfFile) {
+			throw new Error("PDF file is required");
+		}
 
-		console.log("Sending upload data:", uploadData);
+		// Create FormData for file upload
+		const formData = new FormData();
+		formData.append("title", data.title);
+		formData.append("description", data.description || "");
+		formData.append("categoryId", data.categoryId);
+		formData.append("pdfFile", data.pdfFile);
 
-		return httpClient.post<{ message: string; paperId: number }>(
-			API_ENDPOINTS.PAPERS.UPLOAD,
-			uploadData
-		);
+		console.log("Sending FormData upload to server endpoint");
+
+		// Use the server endpoint that handles actual file uploads
+		const token = localStorage.getItem("auth_token") || localStorage.getItem("token");
+		
+		// Construct server upload endpoint URL
+		const serverUrl = API_CONFIG.BASE_URL.includes('/api') 
+			? API_CONFIG.BASE_URL.replace('/api', '') 
+			: API_CONFIG.BASE_URL;
+		
+		const response = await fetch(`${serverUrl}/api/papers/upload`, {
+			method: "POST",
+			headers: {
+				...(token && { Authorization: `Bearer ${token}` }),
+				// Don't set Content-Type for FormData - browser will set it with boundary
+			},
+			body: formData,
+		});
+
+		if (!response.ok) {
+			const errorData = await response.text();
+			console.error("Upload failed:", errorData);
+			throw new Error(`Upload failed: ${response.statusText}`);
+		}
+
+		const result = await response.json();
+		console.log("Upload successful:", result);
+		return result;
 	},
 
 	/**

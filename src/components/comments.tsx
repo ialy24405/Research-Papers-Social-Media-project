@@ -168,10 +168,11 @@ export function Comments({
 					<CardContent className="p-4">
 						<div className="flex gap-3">
 							<Avatar className="h-8 w-8">
-								<AvatarImage src={comment.user.avatarUrl || ""} />
+								{comment.user.avatarUrl != null ?
+								<AvatarImage src={comment.user.avatarUrl || ""} /> :
 								<AvatarFallback>
 									{comment.user.name?.charAt(0).toUpperCase() || "U"}
-								</AvatarFallback>
+								</AvatarFallback>}
 							</Avatar>
 							<div className="flex-1 space-y-1">
 								<div className="flex items-center gap-2">

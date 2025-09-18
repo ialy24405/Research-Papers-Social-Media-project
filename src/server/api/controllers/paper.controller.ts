@@ -8,18 +8,18 @@ import { paperUploadSchema, papersQuerySchema } from "../utils/validation";
 import { AuthRequest } from "../middleware/auth.middleware";
 import { config } from "../../config";
 
-// Configure multer for file uploads
+// Configure multer for file uploads - temporary storage first
 const storage = multer.diskStorage({
 	destination: (req, file, cb) => {
-		const uploadDir = config.upload.directory;
-		if (!fs.existsSync(uploadDir)) {
-			fs.mkdirSync(uploadDir, { recursive: true });
+		const tempDir = path.join(config.upload.directory, 'temp');
+		if (!fs.existsSync(tempDir)) {
+			fs.mkdirSync(tempDir, { recursive: true });
 		}
-		cb(null, uploadDir);
+		cb(null, tempDir);
 	},
 	filename: (req, file, cb) => {
 		const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-		cb(null, "paper-" + uniqueSuffix + path.extname(file.originalname));
+		cb(null, "temp-paper-" + uniqueSuffix + path.extname(file.originalname));
 	},
 });
 
@@ -36,6 +36,36 @@ const upload = multer({
 		}
 	},
 });
+
+// Helper function to sanitize filename
+const sanitizeFilename = (filename: string): string => {
+	return filename
+		.replace(/[^a-zA-Z0-9\s\-_.]/g, '') // Remove special characters
+		.replace(/\s+/g, '-') // Replace spaces with hyphens
+		.replace(/--+/g, '-') // Replace multiple hyphens with single hyphen
+		.substring(0, 100); // Limit length
+};
+
+// Helper function to move and rename file to organized structure
+const moveToOrganizedFolder = async (tempFilePath: string, paperId: number, title: string): Promise<string> => {
+	const sanitizedTitle = sanitizeFilename(title);
+	const paperFolder = path.join(config.upload.directory, `paper-${paperId}`);
+	
+	// Create paper-specific folder
+	if (!fs.existsSync(paperFolder)) {
+		fs.mkdirSync(paperFolder, { recursive: true });
+	}
+	
+	// New filename with sanitized title
+	const newFilename = `${sanitizedTitle}.pdf`;
+	const newFilePath = path.join(paperFolder, newFilename);
+	
+	// Move file from temp to organized location
+	fs.renameSync(tempFilePath, newFilePath);
+	
+	// Return the relative path for database storage
+	return `/uploads/paper-${paperId}/${newFilename}`;
+};
 
 export class PaperController {
 	static uploadMiddleware = upload.single("pdfFile");
@@ -119,29 +149,58 @@ export class PaperController {
 				return res.status(400).json({ error: "Invalid category" });
 			}
 
-			// Create paper data
+			// Create paper data with temporary PDF URL
 			const paperData: CreatePaperData = {
 				title,
 				description,
 				authorId: req.user.id,
 				categoryId,
-				pdfUrl: `/uploads/${req.file.filename}`,
+				pdfUrl: `/uploads/temp/${req.file.filename}`, // Temporary path
 			};
 
 			const paper = await PaperModel.create(paperData);
 
-			res.status(201).json({
-				message: "Paper submitted for review.",
-				paper: {
-					id: paper.id,
-					title: paper.title,
-					description: paper.description,
-					categoryId: paper.category_id,
-					pdfUrl: paper.pdf_url,
-					status: paper.status,
-					createdAt: paper.created_at,
-				},
-			});
+			try {
+				// Move file to organized folder structure and get new path
+				const organizedPdfPath = await moveToOrganizedFolder(
+					req.file.path,
+					paper.id,
+					title
+				);
+
+				// Update paper with organized PDF path
+				await PaperModel.updatePdfUrl(paper.id, organizedPdfPath);
+
+				res.status(201).json({
+					message: "Paper submitted for review.",
+					paper: {
+						id: paper.id,
+						title: paper.title,
+						description: paper.description,
+						categoryId: paper.category_id,
+						pdfUrl: organizedPdfPath,
+						status: paper.status,
+						createdAt: paper.created_at,
+					},
+				});
+			} catch (moveError) {
+				console.error("Error organizing file:", moveError);
+				
+				// If file organization fails, keep the paper but with temp path
+				// This ensures the paper isn't lost even if file organization fails
+				res.status(201).json({
+					message: "Paper submitted for review (file organization pending).",
+					paper: {
+						id: paper.id,
+						title: paper.title,
+						description: paper.description,
+						categoryId: paper.category_id,
+						pdfUrl: `/uploads/temp/${req.file.filename}`,
+						status: paper.status,
+						createdAt: paper.created_at,
+					},
+				});
+			}
 		} catch (error) {
 			console.error("Upload paper error:", error);
 

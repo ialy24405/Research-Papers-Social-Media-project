@@ -16,6 +16,7 @@ export interface Paper {
 	title: string;
 	name: string;
 	description: string;
+	author: User;
 	authorId: number;
 	authorName: string;
 	authorAvatar: string | null;

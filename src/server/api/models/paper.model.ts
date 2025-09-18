@@ -385,4 +385,9 @@ export class PaperModel {
 		const query = `DELETE FROM papers WHERE id = $1`;
 		await db.query(query, [paperId]);
 	}
+
+	static async updatePdfUrl(paperId: number, pdfUrl: string): Promise<void> {
+		const query = `UPDATE papers SET pdf_url = $1, updated_at = NOW() WHERE id = $2`;
+		await db.query(query, [pdfUrl, paperId]);
+	}
 }

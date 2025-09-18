@@ -4,7 +4,27 @@ import helmet from "helmet";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import path from "path";
+import fs from "fs";
 import { config } from "./config";
+
+// Ensure upload directories exist
+const ensureUploadDirectories = () => {
+	const baseUploadDir = config.upload.directory;
+	const tempDir = path.join(baseUploadDir, 'temp');
+	
+	if (!fs.existsSync(baseUploadDir)) {
+		fs.mkdirSync(baseUploadDir, { recursive: true });
+		console.log(`📁 Created base upload directory: ${baseUploadDir}`);
+	}
+	
+	if (!fs.existsSync(tempDir)) {
+		fs.mkdirSync(tempDir, { recursive: true });
+		console.log(`📁 Created temp upload directory: ${tempDir}`);
+	}
+};
+
+// Initialize upload directories
+ensureUploadDirectories();
 
 // Import routes
 import authRoutes from "./api/routes/auth.routes";
