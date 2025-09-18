@@ -131,14 +131,16 @@ export default async function handler(
 			});
 		}
 
-		console.log("✅ Validation passed. Creating database record...");
+		console.log("✅ Validation passed. Preparing file structure...");
 
-		// Create paper record in database first
+		// First, create a temporary paper record to get an ID, or generate a unique identifier
+		// We'll use a temporary approach to get the paper ID first
 		let paperResult;
 		try {
+			// Create paper record with a temporary pdf_url to satisfy the NOT NULL constraint
 			paperResult = await query(
-				`INSERT INTO papers (title, description, author_id, category_id, status, created_at, updated_at) 
-				 VALUES ($1, $2, $3, $4, 'pending', NOW(), NOW()) 
+				`INSERT INTO papers (title, description, author_id, category_id, pdf_url, status, created_at, updated_at) 
+				 VALUES ($1, $2, $3, $4, 'temp', 'pending', NOW(), NOW()) 
 				 RETURNING id`,
 				[title, description, req.userId, categoryId]
 			);
@@ -195,6 +197,15 @@ export default async function handler(
 			console.log("✅ File copied successfully");
 		} catch (copyError) {
 			console.error("❌ Error copying file:", copyError);
+
+			// Clean up database record if file operations fail
+			try {
+				await query(`DELETE FROM papers WHERE id = $1`, [paperId]);
+				console.log("🧹 Cleaned up database record due to file error");
+			} catch (cleanupError) {
+				console.error("❌ Error cleaning up database record:", cleanupError);
+			}
+
 			throw new Error(`File copy failed: ${copyError}`);
 		}
 
