@@ -108,7 +108,7 @@ export const paperService = {
 
 		if (!response.ok) {
 			let errorMessage = `Upload failed: ${response.statusText}`;
-			
+
 			try {
 				const errorData = await response.json();
 				errorMessage = errorData.error || errorMessage;
@@ -139,8 +139,8 @@ export const paperService = {
 				);
 			} else if (response.status === 400) {
 				throw new Error(
-					errorMessage.includes("required") || errorMessage.includes("Invalid") 
-						? errorMessage 
+					errorMessage.includes("required") || errorMessage.includes("Invalid")
+						? errorMessage
 						: "Invalid file or missing information. Please check your inputs."
 				);
 			} else {
