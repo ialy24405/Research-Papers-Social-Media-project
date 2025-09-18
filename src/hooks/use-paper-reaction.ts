@@ -28,7 +28,8 @@ export const usePaperReaction = (paperId: number, initialCount: number = 0) => {
 
 	// Load initial stats and user reaction
 	useEffect(() => {
-		if (typeof window !== "undefined") {
+		// Don't make API calls for invalid paper IDs
+		if (typeof window !== "undefined" && paperId && paperId > 0) {
 			// Load stats (try API first, then localStorage)
 			getReactionStats(paperId)
 				.then(setStats)
@@ -44,6 +45,16 @@ export const usePaperReaction = (paperId: number, initialCount: number = 0) => {
 					// Fallback to localStorage only
 					setCurrentReaction(getUserReactionType(paperId));
 				});
+		} else if (paperId <= 0) {
+			// Reset state for invalid paper IDs
+			setStats({
+				like: 0,
+				love: 0,
+				support: 0,
+				insightful: 0,
+				total: initialCount,
+			});
+			setCurrentReaction(null);
 		}
 	}, [paperId, initialCount]);
 
@@ -77,6 +88,16 @@ export const usePaperReaction = (paperId: number, initialCount: number = 0) => {
 
 	const toggleReaction = useCallback(
 		async (reactionType: ReactionData["type"]) => {
+			// Don't allow actions on invalid paper IDs
+			if (!paperId || paperId <= 0) {
+				return {
+					success: false,
+					action: "added" as const,
+					userReaction: currentReaction,
+					stats,
+				};
+			}
+
 			setIsLoading(true);
 
 			try {

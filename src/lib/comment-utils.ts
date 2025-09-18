@@ -170,22 +170,51 @@ export const getComments = async (
 			// - An array of comments
 			// - An object with `comments` property
 			// - An object with `data` property (common REST wrapper)
-			let comments: Comment[] = [];
+			let rawComments: any[] = [];
 			if (Array.isArray(result)) {
-				comments = result;
+				rawComments = result;
 			} else if (Array.isArray(result.comments)) {
-				comments = result.comments;
+				rawComments = result.comments;
 			} else if (Array.isArray(result.data)) {
-				comments = result.data;
+				rawComments = result.data;
 			} else {
 				// fallback: try to find any array-valued prop
 				for (const key of Object.keys(result || {})) {
 					if (Array.isArray((result as any)[key])) {
-						comments = (result as any)[key];
+						rawComments = (result as any)[key];
 						break;
 					}
 				}
 			}
+
+			// Transform the raw comments to match our Comment interface
+			const comments: Comment[] = rawComments.map((rawComment: any) => {
+				// Handle both 'author' and 'user' properties from API
+				const userInfo = rawComment.author || rawComment.user || {};
+				
+				return {
+					id: rawComment.id,
+					text: rawComment.text || rawComment.comment_text,
+					createdAt: rawComment.createdAt || rawComment.created_at,
+					parent_comment_id: rawComment.parent_comment_id || rawComment.parentCommentId,
+					user: {
+						id: userInfo.id || userInfo.user_id,
+						name: userInfo.name || userInfo.user_name || userInfo.full_name || 'Unknown User',
+						avatarUrl: userInfo.avatarUrl || userInfo.avatar_url || null,
+					},
+					replies: rawComment.replies ? rawComment.replies.map((reply: any) => ({
+						id: reply.id,
+						text: reply.text || reply.comment_text,
+						createdAt: reply.createdAt || reply.created_at,
+						parent_comment_id: reply.parent_comment_id || reply.parentCommentId,
+						user: {
+							id: (reply.author || reply.user || {}).id || (reply.author || reply.user || {}).user_id,
+							name: (reply.author || reply.user || {}).name || (reply.author || reply.user || {}).user_name || (reply.author || reply.user || {}).full_name || 'Unknown User',
+							avatarUrl: (reply.author || reply.user || {}).avatarUrl || (reply.author || reply.user || {}).avatar_url || null,
+						}
+					})) : []
+				};
+			});
 
 			return { success: true, comments };
 		} else {

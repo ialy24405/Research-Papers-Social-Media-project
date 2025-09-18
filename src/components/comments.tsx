@@ -168,16 +168,18 @@ export function Comments({
 					<CardContent className="p-4">
 						<div className="flex gap-3">
 							<Avatar className="h-8 w-8">
-								{comment.user.avatarUrl != null ?
-								<AvatarImage src={comment.user.avatarUrl || ""} /> :
-								<AvatarFallback>
-									{comment.user.name?.charAt(0).toUpperCase() || "U"}
-								</AvatarFallback>}
+								{comment.user?.avatarUrl ? (
+									<AvatarImage src={comment.user.avatarUrl} />
+								) : (
+									<AvatarFallback>
+										{comment.user?.name?.charAt(0).toUpperCase() || "U"}
+									</AvatarFallback>
+								)}
 							</Avatar>
 							<div className="flex-1 space-y-1">
 								<div className="flex items-center gap-2">
 									<span className="font-medium text-sm">
-										{comment.user.name}
+										{comment.user?.name || 'Unknown User'}
 									</span>
 									<span className="text-xs text-muted-foreground">
 										{formatDate(comment.createdAt)}
