@@ -1,9 +1,9 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { IncomingForm, File } from 'formidable';
+import { IncomingForm, File } from "formidable";
 import { query } from "@/lib/db";
 import jwt from "jsonwebtoken";
-import fs from 'fs';
-import path from 'path';
+import fs from "fs";
+import path from "path";
 
 // Disable Next.js body parsing to handle multipart data
 export const config = {
@@ -73,25 +73,35 @@ export default async function handler(
 			});
 		});
 
-		console.log("📋 Parsed form data:", { fields: Object.keys(fields), files: Object.keys(files) });
+		console.log("📋 Parsed form data:", {
+			fields: Object.keys(fields),
+			files: Object.keys(files),
+		});
 
 		// Extract form data (formidable v3 returns arrays)
 		const title = Array.isArray(fields.title) ? fields.title[0] : fields.title;
-		const description = Array.isArray(fields.description) ? fields.description[0] : (fields.description || '');
-		const categoryId = Array.isArray(fields.categoryId) ? fields.categoryId[0] : fields.categoryId;
-		const pdfFile = Array.isArray(files.pdfFile) ? files.pdfFile[0] : files.pdfFile;
+		const description = Array.isArray(fields.description)
+			? fields.description[0]
+			: fields.description || "";
+		const categoryId = Array.isArray(fields.categoryId)
+			? fields.categoryId[0]
+			: fields.categoryId;
+		const pdfFile = Array.isArray(files.pdfFile)
+			? files.pdfFile[0]
+			: files.pdfFile;
 
 		// Validate required fields
 		if (!title || !categoryId || !pdfFile) {
-			return res.status(400).json({ 
-				error: "Missing required fields: title, categoryId, and pdfFile are required" 
+			return res.status(400).json({
+				error:
+					"Missing required fields: title, categoryId, and pdfFile are required",
 			});
 		}
 
 		// Validate file type
-		if (pdfFile.mimetype !== 'application/pdf') {
-			return res.status(400).json({ 
-				error: "Only PDF files are allowed" 
+		if (pdfFile.mimetype !== "application/pdf") {
+			return res.status(400).json({
+				error: "Only PDF files are allowed",
 			});
 		}
 
@@ -110,10 +120,10 @@ export default async function handler(
 
 		// Create organized folder structure
 		// For Vercel, use the public directory for file storage
-		const publicDir = path.join(process.cwd(), 'public');
-		const uploadsDir = path.join(publicDir, 'uploads');
+		const publicDir = path.join(process.cwd(), "public");
+		const uploadsDir = path.join(publicDir, "uploads");
 		const paperFolder = path.join(uploadsDir, `paper-${paperId}`);
-		
+
 		// Ensure directories exist
 		if (!fs.existsSync(uploadsDir)) {
 			fs.mkdirSync(uploadsDir, { recursive: true });
@@ -132,7 +142,7 @@ export default async function handler(
 		// Move file to organized location
 		console.log("📦 Moving file to final location...");
 		fs.copyFileSync(pdfFile.filepath, finalPath);
-		
+
 		// Clean up temporary file
 		try {
 			fs.unlinkSync(pdfFile.filepath);
@@ -141,7 +151,11 @@ export default async function handler(
 		}
 
 		// Update paper record with file path (relative to public directory)
-		const relativePath = path.join('uploads', `paper-${paperId}`, finalFilename);
+		const relativePath = path.join(
+			"uploads",
+			`paper-${paperId}`,
+			finalFilename
+		);
 		await query(
 			`UPDATE papers SET pdf_url = $1, updated_at = NOW() WHERE id = $2`,
 			[relativePath, paperId]
@@ -156,29 +170,29 @@ export default async function handler(
 				title,
 				description,
 				pdfPath: relativePath,
-				status: "pending"
-			}
+				status: "pending",
+			},
 		});
-
 	} catch (error) {
 		console.error("❌ Upload error:", error);
-		
+
 		if (error instanceof Error) {
-			if (error.message.includes('maxFileSize')) {
-				return res.status(413).json({ 
-					error: "File too large. Maximum size is 5MB." 
+			if (error.message.includes("maxFileSize")) {
+				return res.status(413).json({
+					error: "File too large. Maximum size is 5MB.",
 				});
 			}
-			if (error.message.includes('ENOSPC')) {
-				return res.status(507).json({ 
-					error: "Insufficient storage space. Please try again later." 
+			if (error.message.includes("ENOSPC")) {
+				return res.status(507).json({
+					error: "Insufficient storage space. Please try again later.",
 				});
 			}
 		}
 
 		res.status(500).json({
 			error: "Internal server error",
-			details: process.env.NODE_ENV === "development" ? String(error) : undefined,
+			details:
+				process.env.NODE_ENV === "development" ? String(error) : undefined,
 		});
 	}
 }
