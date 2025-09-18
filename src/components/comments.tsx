@@ -179,7 +179,7 @@ export function Comments({
 							<div className="flex-1 space-y-1">
 								<div className="flex items-center gap-2">
 									<span className="font-medium text-sm">
-										{comment.user?.name || 'Unknown User'}
+										{comment.user?.name || "Unknown User"}
 									</span>
 									<span className="text-xs text-muted-foreground">
 										{formatDate(comment.createdAt)}
