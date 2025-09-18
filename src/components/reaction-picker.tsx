@@ -7,7 +7,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import { Heart, ThumbsUp, Lightbulb, Zap, Target, Star } from "lucide-react";
+import { Heart, ThumbsUp, Lightbulb, Star } from "lucide-react";
 import { ReactionData } from "@/lib/reaction-utils";
 import { cn } from "@/lib/utils";
 
@@ -63,6 +63,9 @@ export function ReactionPicker({
 	children,
 	size = "lg",
 }: ReactionPickerProps) {
+	// Hooks must be called unconditionally
+	const [open, setOpen] = useState(false);
+
 	// If a child element is provided (custom trigger), make it toggle reaction on click
 	if (children) {
 		const handleClick = () => {
@@ -79,8 +82,6 @@ export function ReactionPicker({
 			</div>
 		);
 	}
-
-	const [open, setOpen] = useState(false);
 
 	const handleReactionClick = (reactionType: ReactionData["type"]) => {
 		onReactionSelect(reactionType);

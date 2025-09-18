@@ -8,7 +8,7 @@ import { ListFilter, Search } from "lucide-react";
 import Link from "next/link";
 
 export default function SavedPostsPage() {
-	const { papers: savedPapers, isLoading, error } = useSavedPapers();
+	const { papers: papers, isLoading, error } = useSavedPapers();
 
 	if (isLoading) {
 		return (
@@ -47,9 +47,9 @@ export default function SavedPostsPage() {
 				</div>
 			</div>
 
-			{savedPapers.length > 0 ? (
+			{papers.length > 0 ? (
 				<div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
-					{savedPapers.map((paper) => (
+					{papers.map((paper) => (
 						<PaperCard key={paper.id} paper={paper} />
 					))}
 				</div>

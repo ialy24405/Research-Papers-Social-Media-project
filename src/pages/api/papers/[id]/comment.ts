@@ -50,14 +50,14 @@ export default async function handler(
 	}
 
 	try {
-		const { commentText, parentCommentId } = req.body;
+		const { comment_text, parentCommentId } = req.body;
 
 		// Validate input
-		if (!commentText || commentText.trim().length === 0) {
+		if (!comment_text || comment_text.trim().length === 0) {
 			return res.status(400).json({ error: "Comment text is required" });
 		}
 
-		if (commentText.length > 1000) {
+		if (comment_text.length > 1000) {
 			return res
 				.status(400)
 				.json({ error: "Comment text is too long (max 1000 characters)" });
@@ -90,7 +90,7 @@ export default async function handler(
 			(paper_id, user_id, interaction_type, comment_text, parent_comment_id, created_at) 
 			VALUES ($1, $2, 'comment', $3, $4, NOW()) 
 			RETURNING id, created_at`,
-			[paperId, req.userId, commentText.trim(), parentCommentId || null]
+			[paperId, req.userId, comment_text.trim(), parentCommentId || null]
 		);
 
 		// Get user info for the response
@@ -106,7 +106,7 @@ export default async function handler(
 			message: "Comment added successfully",
 			comment: {
 				id: comment.id,
-				text: commentText.trim(),
+				text: comment_text.trim(),
 				parentCommentId: parentCommentId || null,
 				createdAt: comment.created_at,
 				author: {

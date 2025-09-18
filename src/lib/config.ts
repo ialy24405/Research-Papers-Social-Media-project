@@ -11,37 +11,48 @@
  * Update these values for different deployment environments.
  */
 
-export const config = {
-	// API Configuration
-	api: {
-		// Base URL for the backend API - ensure it's absolute for HTTP client
-		baseUrl: process.env.NEXT_PUBLIC_API_URL?.startsWith("/")
-			? `${
-					typeof window !== "undefined"
-						? window.location.origin
-						: "http://localhost:3000"
-			  }${process.env.NEXT_PUBLIC_API_URL}`
-			: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api",
+export const config = (() => {
+	// Determine a sensible default origin depending on runtime (browser vs server)
+	const browserOrigin =
+		typeof window !== "undefined" ? window.location.origin : undefined;
 
-		// Backend server URL (without /api suffix)
-		serverUrl:
-			process.env.NEXT_PUBLIC_SERVER_URL ||
-			process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") ||
-			"http://localhost:3000",
-	},
+	// serverDefault is used during SSR or when env vars are missing. Don't forcibly assume localhost
+	const serverDefault =
+		process.env.NEXT_PUBLIC_SERVER_URL ||
+		process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") 
+		// ||
+		// "http://localhost:3000";
 
-	// Upload Configuration
-	uploads: {
-		// Base path for uploaded files
-		basePath: "/uploads",
-	},
+	const origin = browserOrigin || serverDefault;
 
-	// Environment
-	env: {
-		isDevelopment: process.env.NODE_ENV === "development",
-		isProduction: process.env.NODE_ENV === "production",
-	},
-} as const;
+	// Resolve base API URL. If NEXT_PUBLIC_API_URL is set and is relative, use the runtime origin.
+	const rawApi = process.env.NEXT_PUBLIC_API_URL;
+	const baseUrl = rawApi
+		? rawApi.startsWith("http")
+			? rawApi
+			: `${origin}${rawApi.startsWith("/") ? rawApi : `/${rawApi}`}`
+		: `${origin}/api`;
+
+	const serverUrl =
+		process.env.NEXT_PUBLIC_SERVER_URL ||
+		(rawApi && rawApi.startsWith("http")
+			? rawApi.replace(/\/api\/?$/, "")
+			: origin);
+
+	return {
+		api: {
+			baseUrl,
+			serverUrl,
+		},
+		uploads: {
+			basePath: "/uploads",
+		},
+		env: {
+			isDevelopment: process.env.NODE_ENV === "development",
+			isProduction: process.env.NODE_ENV === "production",
+		},
+	} as const;
+})();
 
 /**
  * Get the full URL for a backend resource
@@ -57,7 +68,12 @@ export function getBackendUrl(path: string): string {
 	// Ensure path starts with /
 	const normalizedPath = path.startsWith("/") ? path : `/${path}`;
 
-	return `${config.api.serverUrl}${normalizedPath}`;
+	// Use window.location.origin in browser, fallback to serverUrl for SSR or environment
+	const origin =
+		typeof window !== "undefined"
+			? window.location.origin
+			: config.api.serverUrl;
+	return `${origin}${normalizedPath}`;
 }
 
 /**

@@ -53,8 +53,8 @@ export const addComment = async (
 			parentCommentId,
 		});
 
-		const requestBody: { comment: string; parentCommentId?: number } = {
-			comment: commentText.trim(),
+		const requestBody: { comment_text: string; parentCommentId?: number } = {
+			comment_text: commentText.trim(),
 		};
 
 		if (parentCommentId) {
@@ -166,8 +166,27 @@ export const getComments = async (
 			const result = await response.json();
 			console.log("✅ Comments fetched successfully:", result);
 
-			// Extract comments array from the response
-			const comments = result.comments || [];
+			// Normalize different possible response shapes:
+			// - An array of comments
+			// - An object with `comments` property
+			// - An object with `data` property (common REST wrapper)
+			let comments: Comment[] = [];
+			if (Array.isArray(result)) {
+				comments = result;
+			} else if (Array.isArray(result.comments)) {
+				comments = result.comments;
+			} else if (Array.isArray(result.data)) {
+				comments = result.data;
+			} else {
+				// fallback: try to find any array-valued prop
+				for (const key of Object.keys(result || {})) {
+					if (Array.isArray((result as any)[key])) {
+						comments = (result as any)[key];
+						break;
+					}
+				}
+			}
+
 			return { success: true, comments };
 		} else {
 			let errorData: any = {};

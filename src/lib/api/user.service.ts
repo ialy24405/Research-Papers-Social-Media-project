@@ -50,6 +50,11 @@ export const userService = {
 	 * Get current user's saved papers
 	 */
 	async getSavedPapers(): Promise<Paper[]> {
-		return httpClient.get<Paper[]>(API_ENDPOINTS.USERS.SAVED_PAPERS);
+		const res: any = await httpClient.get(API_ENDPOINTS.USERS.SAVED_PAPERS);
+		// API may return either an array or an object { papers: [], pagination: {} }
+		if (Array.isArray(res)) return res as Paper[];
+		if (res && typeof res === "object" && Array.isArray(res.papers))
+			return res.papers as Paper[];
+		return [];
 	},
 };
