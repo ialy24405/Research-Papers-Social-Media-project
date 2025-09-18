@@ -3,7 +3,7 @@
 ## 🎯 Benefits of Using Supabase Storage
 
 - ✅ **No file system limitations** on Vercel
-- ✅ **Direct public URLs** for PDFs (no custom serving needed)  
+- ✅ **Direct public URLs** for PDFs (no custom serving needed)
 - ✅ **Organized folder structure** (`papers/paper-{id}/filename.pdf`)
 - ✅ **Scalable storage** with built-in CDN
 - ✅ **Automatic file optimization** and caching
@@ -45,11 +45,11 @@ VALUES (
 
 Add these to your **Vercel Dashboard** → **Settings** → **Environment Variables**:
 
-| Variable | Value | Where to Find |
-|----------|-------|---------------|
-| `NEXT_PUBLIC_SUPABASE_URL` | `https://xxxxx.supabase.co` | Project Settings → API → Project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `eyJhbGc...` | Project Settings → API → Project API keys → anon/public |
-| `SUPABASE_SERVICE_ROLE_KEY` | `eyJhbGc...` | Project Settings → API → Project API keys → service_role |
+| Variable                        | Value                       | Where to Find                                            |
+| ------------------------------- | --------------------------- | -------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | `https://xxxxx.supabase.co` | Project Settings → API → Project URL                     |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `eyJhbGc...`                | Project Settings → API → Project API keys → anon/public  |
+| `SUPABASE_SERVICE_ROLE_KEY`     | `eyJhbGc...`                | Project Settings → API → Project API keys → service_role |
 
 ### 4. Test the Upload
 
@@ -61,6 +61,7 @@ Add these to your **Vercel Dashboard** → **Settings** → **Environment Variab
 ## 📁 File Organization
 
 Files will be organized as:
+
 ```
 papers/
 ├── paper-1/
@@ -88,6 +89,7 @@ papers/
 ## 🎉 Result
 
 After setup, your paper uploads will:
+
 - ✅ Work seamlessly on Vercel
 - ✅ Store files in Supabase Storage
 - ✅ Generate direct public URLs for PDFs

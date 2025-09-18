@@ -57,7 +57,7 @@ export default async function handler(
 	res: NextApiResponse
 ) {
 	console.log("🚀 Upload API called with method:", req.method);
-	
+
 	if (req.method !== "POST") {
 		return res.status(405).json({ error: "Method not allowed" });
 	}
@@ -73,7 +73,10 @@ export default async function handler(
 		return res.status(500).json({ error: "Database configuration error" });
 	}
 
-	if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+	if (
+		!process.env.NEXT_PUBLIC_SUPABASE_URL ||
+		!process.env.SUPABASE_SERVICE_ROLE_KEY
+	) {
 		console.error("❌ Supabase environment variables are missing");
 		return res.status(500).json({ error: "Storage configuration error" });
 	}
@@ -121,7 +124,8 @@ export default async function handler(
 		// Validate required fields
 		if (!title || !categoryId || !pdfFile) {
 			return res.status(400).json({
-				error: "Missing required fields: title, categoryId, and pdfFile are required",
+				error:
+					"Missing required fields: title, categoryId, and pdfFile are required",
 			});
 		}
 
@@ -153,7 +157,7 @@ export default async function handler(
 
 		// Generate sanitized filename and storage path
 		const sanitizedTitle = sanitizeFilename(title);
-		const fileExtension = '.pdf';
+		const fileExtension = ".pdf";
 		const timestamp = Date.now();
 		const storageFileName = `${sanitizedTitle}-${timestamp}${fileExtension}`;
 		const storagePath = `papers/paper-${paperId}/${storageFileName}`;
@@ -164,16 +168,21 @@ export default async function handler(
 		try {
 			// Read file content
 			const fileContent = fs.readFileSync(pdfFile.filepath);
-			console.log("📄 File read successfully, size:", fileContent.length, "bytes");
+			console.log(
+				"📄 File read successfully, size:",
+				fileContent.length,
+				"bytes"
+			);
 
 			// Upload to Supabase Storage
-			const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
-				.from('papers') // Make sure this bucket exists in your Supabase project
-				.upload(storagePath, fileContent, {
-					contentType: pdfFile.mimetype,
-					cacheControl: '3600',
-					upsert: false
-				});
+			const { data: uploadData, error: uploadError } =
+				await supabaseAdmin.storage
+					.from("papers") // Make sure this bucket exists in your Supabase project
+					.upload(storagePath, fileContent, {
+						contentType: pdfFile.mimetype,
+						cacheControl: "3600",
+						upsert: false,
+					});
 
 			if (uploadError) {
 				console.error("❌ Supabase upload error:", uploadError);
@@ -184,7 +193,7 @@ export default async function handler(
 
 			// Get the public URL for the uploaded file
 			const { data: publicURL } = supabaseAdmin.storage
-				.from('papers')
+				.from("papers")
 				.getPublicUrl(storagePath);
 
 			const pdfUrl = publicURL.publicUrl;
@@ -197,7 +206,6 @@ export default async function handler(
 			);
 
 			console.log("📁 Updated paper record with Supabase URL");
-
 		} catch (storageError) {
 			console.error("❌ Storage error:", storageError);
 
@@ -234,7 +242,6 @@ export default async function handler(
 				status: "pending",
 			},
 		});
-
 	} catch (error) {
 		console.error("❌ Upload error:", error);
 
@@ -253,7 +260,8 @@ export default async function handler(
 
 		res.status(500).json({
 			error: "Internal server error",
-			details: process.env.NODE_ENV === "development" ? String(error) : undefined,
+			details:
+				process.env.NODE_ENV === "development" ? String(error) : undefined,
 		});
 	}
 }
