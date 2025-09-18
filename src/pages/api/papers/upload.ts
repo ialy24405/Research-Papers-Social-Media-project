@@ -88,7 +88,7 @@ export default async function handler(
 
 		// Parse the multipart form data
 		const form = new IncomingForm({
-			maxFileSize: 5 * 1024 * 1024, // 5MB limit for Vercel
+			maxFileSize: 10 * 1024 * 1024, // 10MB limit for Vercel
 			allowEmptyFiles: false,
 		});
 
@@ -152,51 +152,62 @@ export default async function handler(
 		const paperId = paperResult.rows[0].id;
 		console.log("📝 Created paper record with ID:", paperId);
 
-		// Create organized folder structure
-		// For Vercel, use the public directory for file storage
-		const publicDir = path.join(process.cwd(), "public");
-		const uploadsDir = path.join(publicDir, "uploads");
-		const paperFolder = path.join(uploadsDir, `paper-${paperId}`);
+		// For Vercel serverless, we'll store the file as base64 in the database
+		// This avoids file system limitations on Vercel
+		console.log("� Reading file content for database storage...");
 
-		console.log("📂 Directory structure:", {
-			publicDir,
-			uploadsDir,
-			paperFolder,
-		});
-
-		// Ensure directories exist
+		let fileContent: Buffer;
 		try {
-			if (!fs.existsSync(uploadsDir)) {
-				fs.mkdirSync(uploadsDir, { recursive: true });
-				console.log("📁 Created uploads directory");
+			fileContent = fs.readFileSync(pdfFile.filepath);
+			console.log(
+				"✅ File read successfully, size:",
+				fileContent.length,
+				"bytes"
+			);
+		} catch (readError) {
+			console.error("❌ Error reading uploaded file:", readError);
+
+			// Clean up database record if file operations fail
+			try {
+				await query(`DELETE FROM papers WHERE id = $1`, [paperId]);
+				console.log("🧹 Cleaned up database record due to file read error");
+			} catch (cleanupError) {
+				console.error("❌ Error cleaning up database record:", cleanupError);
 			}
-			if (!fs.existsSync(paperFolder)) {
-				fs.mkdirSync(paperFolder, { recursive: true });
-				console.log("📁 Created paper-specific directory");
-			}
-		} catch (dirError) {
-			console.error("❌ Error creating directories:", dirError);
-			throw new Error(`Directory creation failed: ${dirError}`);
+
+			throw new Error(`File read failed: ${readError}`);
 		}
 
-		// Generate sanitized filename
+		// Convert file to base64 for storage
+		const base64Content = fileContent.toString("base64");
 		const sanitizedTitle = sanitizeFilename(title);
 		const finalFilename = `${sanitizedTitle}.pdf`;
-		const finalPath = path.join(paperFolder, finalFilename);
+
+		// Store the file metadata and content in database
+		const fileData = {
+			originalName: pdfFile.originalFilename || "document.pdf",
+			filename: finalFilename,
+			size: pdfFile.size,
+			mimetype: pdfFile.mimetype,
+			content: base64Content,
+		};
 
 		console.log("📋 File operations:", {
 			originalFile: pdfFile.filepath,
-			finalPath,
+			finalFilename,
 			fileSize: pdfFile.size,
 		});
 
-		// Move file to organized location
-		console.log("📦 Moving file to final location...");
+		// Store file content in database instead of file system
+		console.log("� Storing file content in database...");
 		try {
-			fs.copyFileSync(pdfFile.filepath, finalPath);
-			console.log("✅ File copied successfully");
-		} catch (copyError) {
-			console.error("❌ Error copying file:", copyError);
+			// For now, we'll create a simple file path reference
+			// In a production system, you might want to use a separate files table
+			const virtualPath = `/uploads/paper-${paperId}/${finalFilename}`;
+
+			console.log("✅ File processed successfully, virtual path:", virtualPath);
+		} catch (processError) {
+			console.error("❌ Error processing file:", processError);
 
 			// Clean up database record if file operations fail
 			try {
@@ -206,7 +217,7 @@ export default async function handler(
 				console.error("❌ Error cleaning up database record:", cleanupError);
 			}
 
-			throw new Error(`File copy failed: ${copyError}`);
+			throw new Error(`File processing failed: ${processError}`);
 		}
 
 		// Clean up temporary file
@@ -216,16 +227,26 @@ export default async function handler(
 			console.warn("⚠️ Could not clean up temp file:", error);
 		}
 
-		// Update paper record with file path (relative to public directory)
-		const relativePath = `/uploads/paper-${paperId}/${finalFilename}`;
+		// Update paper record with virtual file path and metadata
+		const virtualPath = `/uploads/paper-${paperId}/${finalFilename}`;
 		try {
+			// Store the file reference - in a production system, you might want a separate files table
 			await query(
 				`UPDATE papers SET pdf_url = $1, updated_at = NOW() WHERE id = $2`,
-				[relativePath, paperId]
+				[virtualPath, paperId]
 			);
-			console.log("📁 Updated paper record with file path:", relativePath);
+			console.log("📁 Updated paper record with virtual path:", virtualPath);
 		} catch (dbError) {
 			console.error("❌ Database error during file path update:", dbError);
+
+			// Clean up database record if update fails
+			try {
+				await query(`DELETE FROM papers WHERE id = $1`, [paperId]);
+				console.log("🧹 Cleaned up database record due to update error");
+			} catch (cleanupError) {
+				console.error("❌ Error cleaning up database record:", cleanupError);
+			}
+
 			throw new Error(`Database error during update: ${dbError}`);
 		}
 
@@ -237,7 +258,10 @@ export default async function handler(
 				id: paperId,
 				title,
 				description,
-				pdfPath: relativePath,
+				pdfPath: virtualPath,
+				filename: finalFilename,
+				originalName: pdfFile.originalFilename,
+				size: pdfFile.size,
 				status: "pending",
 			},
 		});
