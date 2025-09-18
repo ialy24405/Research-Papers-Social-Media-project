@@ -49,7 +49,7 @@ export default function PaperPage({
 
 	// Handle save count changes
 	const handleSaveChange = (isSaved: boolean) => {
-		setSaveCount(prev => isSaved ? prev + 1 : prev - 1);
+		setSaveCount((prev) => (isSaved ? prev + 1 : prev - 1));
 	};
 
 	// Reaction hook - only initialize when we have a paper
@@ -194,7 +194,7 @@ export default function PaperPage({
 									// Create download handler using the centralized utility
 									const handleDownload = createDownloadHandler(
 										paper.pdfUrl,
-										paper.name
+										paper.title
 									);
 
 									return (
@@ -313,7 +313,7 @@ export default function PaperPage({
 								<Button
 									variant="outline"
 									size="sm"
-									onClick={createDownloadHandler(paper.pdfUrl, paper.name)}
+									onClick={createDownloadHandler(paper.pdfUrl, paper.title)}
 								>
 									<Download className="mr-2 h-4 w-4" />
 									Download PDF
@@ -332,8 +332,7 @@ export default function PaperPage({
 									<Heart className="h-5 w-5" /> {reactionCount} Reactions
 								</span>
 								<span className="flex items-center gap-1.5">
-									<MessageCircle className="h-5 w-5" /> {commentCount}{" "}
-									Comments
+									<MessageCircle className="h-5 w-5" /> {commentCount} Comments
 								</span>
 								<span className="flex items-center gap-1.5">
 									<Bookmark className="h-5 w-5" /> {saveCount} Saves
@@ -411,7 +410,7 @@ export default function PaperPage({
 													<CardContent className="flex flex-col items-start gap-2 p-4">
 														<h4 className="font-semibold text-sm leading-snug hover:text-primary">
 															<Link href={`/papers/${relatedPaper.id}`}>
-																{relatedPaper.title }
+																{relatedPaper.title}
 															</Link>
 														</h4>
 														<p className="text-xs text-muted-foreground">
