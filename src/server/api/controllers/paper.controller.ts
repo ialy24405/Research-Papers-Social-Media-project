@@ -11,7 +11,7 @@ import { config } from "../../config";
 // Configure multer for file uploads - temporary storage first
 const storage = multer.diskStorage({
 	destination: (req, file, cb) => {
-		const tempDir = path.join(config.upload.directory, 'temp');
+		const tempDir = path.join(config.upload.directory, "temp");
 		if (!fs.existsSync(tempDir)) {
 			fs.mkdirSync(tempDir, { recursive: true });
 		}
@@ -40,29 +40,33 @@ const upload = multer({
 // Helper function to sanitize filename
 const sanitizeFilename = (filename: string): string => {
 	return filename
-		.replace(/[^a-zA-Z0-9\s\-_.]/g, '') // Remove special characters
-		.replace(/\s+/g, '-') // Replace spaces with hyphens
-		.replace(/--+/g, '-') // Replace multiple hyphens with single hyphen
+		.replace(/[^a-zA-Z0-9\s\-_.]/g, "") // Remove special characters
+		.replace(/\s+/g, "-") // Replace spaces with hyphens
+		.replace(/--+/g, "-") // Replace multiple hyphens with single hyphen
 		.substring(0, 100); // Limit length
 };
 
 // Helper function to move and rename file to organized structure
-const moveToOrganizedFolder = async (tempFilePath: string, paperId: number, title: string): Promise<string> => {
+const moveToOrganizedFolder = async (
+	tempFilePath: string,
+	paperId: number,
+	title: string
+): Promise<string> => {
 	const sanitizedTitle = sanitizeFilename(title);
 	const paperFolder = path.join(config.upload.directory, `paper-${paperId}`);
-	
+
 	// Create paper-specific folder
 	if (!fs.existsSync(paperFolder)) {
 		fs.mkdirSync(paperFolder, { recursive: true });
 	}
-	
+
 	// New filename with sanitized title
 	const newFilename = `${sanitizedTitle}.pdf`;
 	const newFilePath = path.join(paperFolder, newFilename);
-	
+
 	// Move file from temp to organized location
 	fs.renameSync(tempFilePath, newFilePath);
-	
+
 	// Return the relative path for database storage
 	return `/uploads/paper-${paperId}/${newFilename}`;
 };
@@ -185,7 +189,7 @@ export class PaperController {
 				});
 			} catch (moveError) {
 				console.error("Error organizing file:", moveError);
-				
+
 				// If file organization fails, keep the paper but with temp path
 				// This ensures the paper isn't lost even if file organization fails
 				res.status(201).json({

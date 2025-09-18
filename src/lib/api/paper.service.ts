@@ -89,13 +89,14 @@ export const paperService = {
 		console.log("Sending FormData upload to server endpoint");
 
 		// Use the server endpoint that handles actual file uploads
-		const token = localStorage.getItem("auth_token") || localStorage.getItem("token");
-		
+		const token =
+			localStorage.getItem("auth_token") || localStorage.getItem("token");
+
 		// Construct server upload endpoint URL
-		const serverUrl = API_CONFIG.BASE_URL.includes('/api') 
-			? API_CONFIG.BASE_URL.replace('/api', '') 
+		const serverUrl = API_CONFIG.BASE_URL.includes("/api")
+			? API_CONFIG.BASE_URL.replace("/api", "")
 			: API_CONFIG.BASE_URL;
-		
+
 		const response = await fetch(`${serverUrl}/api/papers/upload`, {
 			method: "POST",
 			headers: {
