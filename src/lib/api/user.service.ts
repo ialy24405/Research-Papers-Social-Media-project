@@ -51,10 +51,63 @@ export const userService = {
 	 */
 	async getSavedPapers(): Promise<Paper[]> {
 		const res: any = await httpClient.get(API_ENDPOINTS.USERS.SAVED_PAPERS);
+
 		// API may return either an array or an object { papers: [], pagination: {} }
-		if (Array.isArray(res)) return res as Paper[];
-		if (res && typeof res === "object" && Array.isArray(res.papers))
-			return res.papers as Paper[];
-		return [];
+		let papers: any[] = [];
+		if (Array.isArray(res)) {
+			papers = res;
+		} else if (res && typeof res === "object" && Array.isArray(res.papers)) {
+			papers = res.papers;
+		} else {
+			return [];
+		}
+
+		// Transform the data to match the Paper interface expected by PaperCard
+		return papers.map((paper: any) => ({
+			id: paper.id,
+			title: paper.title,
+			name: paper.title, // PaperCard expects 'name' property
+			description: paper.description,
+			pdfUrl: paper.pdfUrl,
+			status: paper.status,
+			createdAt: paper.createdAt,
+			updatedAt: paper.updatedAt,
+			// Handle author data - API returns author.name, PaperCard expects authorName
+			author: {
+				id: paper.author?.id || 0,
+				fullName: paper.author?.name || "Unknown Author",
+				email: "",
+				collegeName: "",
+				country: "",
+				birthDate: "",
+				role: "user" as const,
+				avatarUrl: paper.author?.avatarUrl || null,
+				ssn: "",
+				createdAt: "",
+			},
+			authorId: paper.author?.id || 0,
+			authorName: paper.author?.name || "Unknown Author",
+			authorAvatar: paper.author?.avatarUrl || null,
+			// Handle category data
+			category: {
+				id: paper.category?.id || "",
+				name: paper.category?.name || "Unknown Category",
+				description: "",
+				imageUrl: "",
+				imageHint: "",
+			},
+			categoryId: paper.category?.id || "",
+			categoryName: paper.category?.name || "Unknown Category",
+			categoryDescription: "",
+			// Default interaction counts
+			reactionCount: 0,
+			commentCount: 0,
+			saveCount: 0,
+			interactions: {
+				reactions: 0,
+				comments: 0,
+				saves: 0,
+			},
+		}));
 	},
 };

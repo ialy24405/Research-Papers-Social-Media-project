@@ -116,11 +116,13 @@ export function PaperCard({ paper }: PaperCardProps) {
 					<Avatar className="h-6 w-6">
 						<AvatarImage
 							src={paper.authorAvatar || undefined}
-							alt={paper.authorName}
+							alt={paper.authorName || "Unknown Author"}
 						/>
-						<AvatarFallback>{paper.authorName.charAt(0)}</AvatarFallback>
+						<AvatarFallback>
+							{paper.authorName?.charAt(0)?.toUpperCase() || "U"}
+						</AvatarFallback>
 					</Avatar>
-					<span>{paper.authorName}</span>
+					<span>{paper.authorName || "Unknown Author"}</span>
 					<span className="text-xs">&bull;</span>
 					<time dateTime={paper.createdAt}>{timeAgo}</time>
 				</div>

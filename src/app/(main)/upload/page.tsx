@@ -50,6 +50,33 @@ export default function UploadPage() {
 				lastModified: selectedFile.lastModified,
 				isFile: selectedFile instanceof File,
 			});
+
+			// Check file type
+			if (selectedFile.type !== "application/pdf") {
+				toast({
+					title: "Invalid file type",
+					description: "Please select a PDF file only.",
+					variant: "destructive",
+				});
+				event.target.value = ""; // Clear the input
+				return;
+			}
+
+			// Check file size (Vercel limit is ~5MB for serverless functions)
+			const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+			if (selectedFile.size > maxSize) {
+				toast({
+					title: "File too large",
+					description: `File size must be less than 5MB. Your file is ${(
+						selectedFile.size /
+						(1024 * 1024)
+					).toFixed(1)}MB.`,
+					variant: "destructive",
+				});
+				event.target.value = ""; // Clear the input
+				return;
+			}
+
 			setFile(selectedFile);
 		} else {
 			console.log("No file selected or files array is empty");
@@ -113,8 +140,8 @@ export default function UploadPage() {
 
 		try {
 			await uploadPaper({
-				title:title,
-				description :description,
+				title: title,
+				description: description,
 				categoryId: categoryId,
 				pdfFile: file,
 			});

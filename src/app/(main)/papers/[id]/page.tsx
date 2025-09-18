@@ -122,7 +122,7 @@ export default function PaperPage({
 		.slice(0, 5)
 		.map((p) => ({
 			id: p.id,
-			title: p.name,
+			title: p.title,
 			author: p.authorName,
 			description: p.description,
 		}));
@@ -134,7 +134,7 @@ export default function PaperPage({
 					{/* Paper Header */}
 					<section>
 						<h1 className="text-3xl md:text-4xl font-bold font-headline tracking-tight">
-							{paper.name}
+							{paper.title}
 						</h1>
 						<div className="mt-4 flex items-center gap-4 text-sm text-muted-foreground">
 							<div className="flex items-center gap-2">
@@ -411,7 +411,7 @@ export default function PaperPage({
 													<CardContent className="flex flex-col items-start gap-2 p-4">
 														<h4 className="font-semibold text-sm leading-snug hover:text-primary">
 															<Link href={`/papers/${relatedPaper.id}`}>
-																{relatedPaper.title}
+																{relatedPaper.title }
 															</Link>
 														</h4>
 														<p className="text-xs text-muted-foreground">

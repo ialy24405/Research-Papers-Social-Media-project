@@ -21,7 +21,7 @@ export const config = {
 
 	upload: {
 		directory: process.env.UPLOAD_DIR || "uploads/",
-		maxFileSize: parseInt(process.env.MAX_FILE_SIZE || "10485760"), // 10MB
+		maxFileSize: parseInt(process.env.MAX_FILE_SIZE || "5242880"), // 5MB for Vercel compatibility
 	},
 
 	cors: {
