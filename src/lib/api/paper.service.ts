@@ -107,13 +107,31 @@ export const paperService = {
 		});
 
 		if (!response.ok) {
-			const errorData = await response.text();
-			console.error("Upload failed:", errorData);
+			let errorMessage = `Upload failed: ${response.statusText}`;
+			
+			try {
+				const errorData = await response.json();
+				errorMessage = errorData.error || errorMessage;
+			} catch {
+				// If JSON parsing fails, try text
+				try {
+					const errorText = await response.text();
+					if (errorText) errorMessage = errorText;
+				} catch {
+					// Keep default error message
+				}
+			}
+
+			console.error("Upload failed:", errorMessage);
 
 			// Handle specific error cases
 			if (response.status === 413) {
 				throw new Error(
 					"File too large. Please upload a PDF smaller than 5MB."
+				);
+			} else if (response.status === 501) {
+				throw new Error(
+					"File upload is currently unavailable on the deployed version. Please try again later or contact support."
 				);
 			} else if (response.status === 401) {
 				throw new Error(
@@ -121,10 +139,12 @@ export const paperService = {
 				);
 			} else if (response.status === 400) {
 				throw new Error(
-					"Invalid file or missing information. Please check your inputs."
+					errorMessage.includes("required") || errorMessage.includes("Invalid") 
+						? errorMessage 
+						: "Invalid file or missing information. Please check your inputs."
 				);
 			} else {
-				throw new Error(`Upload failed: ${response.statusText}`);
+				throw new Error(errorMessage);
 			}
 		}
 
