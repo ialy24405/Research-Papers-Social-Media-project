@@ -1,9 +1,9 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { IncomingForm, File } from "formidable";
 import { query } from "@/lib/db";
+import { supabaseAdmin } from "@/lib/supabase";
 import jwt from "jsonwebtoken";
 import fs from "fs";
-import path from "path";
 
 // Disable Next.js body parsing to handle multipart data
 export const config = {
@@ -57,7 +57,7 @@ export default async function handler(
 	res: NextApiResponse
 ) {
 	console.log("🚀 Upload API called with method:", req.method);
-
+	
 	if (req.method !== "POST") {
 		return res.status(405).json({ error: "Method not allowed" });
 	}
@@ -73,14 +73,16 @@ export default async function handler(
 		return res.status(500).json({ error: "Database configuration error" });
 	}
 
+	if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+		console.error("❌ Supabase environment variables are missing");
+		return res.status(500).json({ error: "Storage configuration error" });
+	}
+
 	// Authenticate user
 	if (!authenticateToken(req)) {
 		// For testing: Use a default user ID if authentication fails
 		console.warn("⚠️ Authentication failed, using default user ID for testing");
 		req.userId = 1; // Default user ID for testing
-
-		// Uncomment the line below to enforce authentication in production
-		// return res.status(401).json({ error: "Unauthorized" });
 	}
 
 	try {
@@ -88,7 +90,7 @@ export default async function handler(
 
 		// Parse the multipart form data
 		const form = new IncomingForm({
-			maxFileSize: 10 * 1024 * 1024, // 10MB limit for Vercel
+			maxFileSize: 5 * 1024 * 1024, // 5MB limit for Vercel
 			allowEmptyFiles: false,
 		});
 
@@ -119,8 +121,7 @@ export default async function handler(
 		// Validate required fields
 		if (!title || !categoryId || !pdfFile) {
 			return res.status(400).json({
-				error:
-					"Missing required fields: title, categoryId, and pdfFile are required",
+				error: "Missing required fields: title, categoryId, and pdfFile are required",
 			});
 		}
 
@@ -131,13 +132,11 @@ export default async function handler(
 			});
 		}
 
-		console.log("✅ Validation passed. Preparing file structure...");
+		console.log("✅ Validation passed. Creating database record...");
 
-		// First, create a temporary paper record to get an ID, or generate a unique identifier
-		// We'll use a temporary approach to get the paper ID first
+		// Create paper record with a temporary pdf_url to satisfy the NOT NULL constraint
 		let paperResult;
 		try {
-			// Create paper record with a temporary pdf_url to satisfy the NOT NULL constraint
 			paperResult = await query(
 				`INSERT INTO papers (title, description, author_id, category_id, pdf_url, status, created_at, updated_at) 
 				 VALUES ($1, $2, $3, $4, 'temp', 'pending', NOW(), NOW()) 
@@ -152,102 +151,73 @@ export default async function handler(
 		const paperId = paperResult.rows[0].id;
 		console.log("📝 Created paper record with ID:", paperId);
 
-		// For Vercel serverless, we'll store the file as base64 in the database
-		// This avoids file system limitations on Vercel
-		console.log("� Reading file content for database storage...");
-
-		let fileContent: Buffer;
-		try {
-			fileContent = fs.readFileSync(pdfFile.filepath);
-			console.log(
-				"✅ File read successfully, size:",
-				fileContent.length,
-				"bytes"
-			);
-		} catch (readError) {
-			console.error("❌ Error reading uploaded file:", readError);
-
-			// Clean up database record if file operations fail
-			try {
-				await query(`DELETE FROM papers WHERE id = $1`, [paperId]);
-				console.log("🧹 Cleaned up database record due to file read error");
-			} catch (cleanupError) {
-				console.error("❌ Error cleaning up database record:", cleanupError);
-			}
-
-			throw new Error(`File read failed: ${readError}`);
-		}
-
-		// Convert file to base64 for storage
-		const base64Content = fileContent.toString("base64");
+		// Generate sanitized filename and storage path
 		const sanitizedTitle = sanitizeFilename(title);
-		const finalFilename = `${sanitizedTitle}.pdf`;
+		const fileExtension = '.pdf';
+		const timestamp = Date.now();
+		const storageFileName = `${sanitizedTitle}-${timestamp}${fileExtension}`;
+		const storagePath = `papers/paper-${paperId}/${storageFileName}`;
 
-		// Store the file metadata and content in database
-		const fileData = {
-			originalName: pdfFile.originalFilename || "document.pdf",
-			filename: finalFilename,
-			size: pdfFile.size,
-			mimetype: pdfFile.mimetype,
-			content: base64Content,
-		};
+		console.log("📦 Uploading to Supabase Storage...");
+		console.log("Storage path:", storagePath);
 
-		console.log("📋 File operations:", {
-			originalFile: pdfFile.filepath,
-			finalFilename,
-			fileSize: pdfFile.size,
-		});
-
-		// Store file content in database instead of file system
-		console.log("� Storing file content in database...");
 		try {
-			// For now, we'll create a simple file path reference
-			// In a production system, you might want to use a separate files table
-			const virtualPath = `/uploads/paper-${paperId}/${finalFilename}`;
+			// Read file content
+			const fileContent = fs.readFileSync(pdfFile.filepath);
+			console.log("📄 File read successfully, size:", fileContent.length, "bytes");
 
-			console.log("✅ File processed successfully, virtual path:", virtualPath);
-		} catch (processError) {
-			console.error("❌ Error processing file:", processError);
+			// Upload to Supabase Storage
+			const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+				.from('papers') // Make sure this bucket exists in your Supabase project
+				.upload(storagePath, fileContent, {
+					contentType: pdfFile.mimetype,
+					cacheControl: '3600',
+					upsert: false
+				});
 
-			// Clean up database record if file operations fail
-			try {
-				await query(`DELETE FROM papers WHERE id = $1`, [paperId]);
-				console.log("🧹 Cleaned up database record due to file error");
-			} catch (cleanupError) {
-				console.error("❌ Error cleaning up database record:", cleanupError);
+			if (uploadError) {
+				console.error("❌ Supabase upload error:", uploadError);
+				throw new Error(`Storage upload failed: ${uploadError.message}`);
 			}
 
-			throw new Error(`File processing failed: ${processError}`);
-		}
+			console.log("✅ File uploaded to Supabase Storage:", uploadData.path);
 
-		// Clean up temporary file
-		try {
-			fs.unlinkSync(pdfFile.filepath);
-		} catch (error) {
-			console.warn("⚠️ Could not clean up temp file:", error);
-		}
+			// Get the public URL for the uploaded file
+			const { data: publicURL } = supabaseAdmin.storage
+				.from('papers')
+				.getPublicUrl(storagePath);
 
-		// Update paper record with virtual file path and metadata
-		const virtualPath = `/uploads/paper-${paperId}/${finalFilename}`;
-		try {
-			// Store the file reference - in a production system, you might want a separate files table
+			const pdfUrl = publicURL.publicUrl;
+			console.log("🔗 Public URL generated:", pdfUrl);
+
+			// Update paper record with the actual file URL
 			await query(
 				`UPDATE papers SET pdf_url = $1, updated_at = NOW() WHERE id = $2`,
-				[virtualPath, paperId]
+				[pdfUrl, paperId]
 			);
-			console.log("📁 Updated paper record with virtual path:", virtualPath);
-		} catch (dbError) {
-			console.error("❌ Database error during file path update:", dbError);
 
-			// Clean up database record if update fails
+			console.log("📁 Updated paper record with Supabase URL");
+
+		} catch (storageError) {
+			console.error("❌ Storage error:", storageError);
+
+			// Clean up database record if storage fails
 			try {
 				await query(`DELETE FROM papers WHERE id = $1`, [paperId]);
-				console.log("🧹 Cleaned up database record due to update error");
+				console.log("🧹 Cleaned up database record due to storage error");
 			} catch (cleanupError) {
 				console.error("❌ Error cleaning up database record:", cleanupError);
 			}
 
-			throw new Error(`Database error during update: ${dbError}`);
+			throw new Error(`Storage error: ${storageError}`);
+		} finally {
+			// Clean up temporary file
+			try {
+				fs.unlinkSync(pdfFile.filepath);
+				console.log("🧹 Cleaned up temporary file");
+			} catch (error) {
+				console.warn("⚠️ Could not clean up temp file:", error);
+			}
 		}
 
 		console.log("🎉 Upload completed successfully!");
@@ -258,13 +228,13 @@ export default async function handler(
 				id: paperId,
 				title,
 				description,
-				pdfPath: virtualPath,
-				filename: finalFilename,
+				pdfUrl: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/papers/${storagePath}`,
 				originalName: pdfFile.originalFilename,
 				size: pdfFile.size,
 				status: "pending",
 			},
 		});
+
 	} catch (error) {
 		console.error("❌ Upload error:", error);
 
@@ -274,17 +244,16 @@ export default async function handler(
 					error: "File too large. Maximum size is 5MB.",
 				});
 			}
-			if (error.message.includes("ENOSPC")) {
+			if (error.message.includes("Storage upload failed")) {
 				return res.status(507).json({
-					error: "Insufficient storage space. Please try again later.",
+					error: "File storage failed. Please try again later.",
 				});
 			}
 		}
 
 		res.status(500).json({
 			error: "Internal server error",
-			details:
-				process.env.NODE_ENV === "development" ? String(error) : undefined,
+			details: process.env.NODE_ENV === "development" ? String(error) : undefined,
 		});
 	}
 }
