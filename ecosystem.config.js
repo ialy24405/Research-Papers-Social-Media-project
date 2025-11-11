@@ -19,11 +19,11 @@ module.exports = {
     },
     {
       name: 'frontend',
-      script: 'node_modules/next/dist/bin/next',
-      args: 'start',
+      script: '.next/standalone/server.js',
       env: {
         NODE_ENV: 'production',
-        PORT: 3000
+        PORT: 3000,
+        HOSTNAME: '0.0.0.0'
       },
       instances: 1,
       autorestart: true,
