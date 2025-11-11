@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-	output: "standalone",
+	output: "standalone", // For EC2 deployment with Node.js server
 	typescript: {
 		ignoreBuildErrors: true,
 	},
@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
 		ignoreDuringBuilds: true,
 	},
 	images: {
+		unoptimized: true,
 		remotePatterns: [
 			{
 				protocol: "https",
@@ -26,6 +27,10 @@ const nextConfig: NextConfig = {
 	},
 	// Configure external packages for server components
 	serverExternalPackages: [],
+	// Environment variables for static export
+	env: {
+		NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || '',
+	},
 };
 
 export default nextConfig;
